@@ -175,17 +175,19 @@ DJANGO_APPS = (
 
 THIRD_PARTY_APPS = (
     # Database migration helpers:
-    'south',
+    #'south',
 
     # Static file management:
     'compressor',
 
     # Asynchronous task queue:
-    'djcelery',
+    #'djcelery',
 )
 
 LOCAL_APPS = (
     'libs',         # To make template tags work
+    'issue_models'
+
 )
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
