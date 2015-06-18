@@ -175,7 +175,7 @@ DJANGO_APPS = (
 
 THIRD_PARTY_APPS = (
     # Database migration helpers:
-    #'south',
+    # 'south',
 
     # Static file management:
     'compressor',
@@ -220,7 +220,7 @@ DEFAULT_FROM_EMAIL = 'webmaster.default@example.com'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 ########## END SESSION
 
-
+AUTH_USER_MODEL = 'issue_models.MyUser'
 ########## COMPRESSION CONFIGURATION
 RESOURCE_VERSION = 1
 
