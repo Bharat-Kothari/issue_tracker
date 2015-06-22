@@ -6,6 +6,8 @@ from os.path import abspath, basename, dirname, join, normpath
 
 ########## PATH CONFIGURATION
 # Absolute filesystem path to the Django project directory:
+from django.core.urlresolvers import reverse_lazy
+
 BASE_DIR = dirname(abspath(__file__))
 ########## END PATH CONFIGURATION
 
@@ -71,6 +73,8 @@ MEDIA_ROOT = normpath(join(BASE_DIR, 'media'))
 MEDIA_URL = '/media/'
 ########## END MEDIA CONFIGURATION
 
+
+LOGIN_REDIRECT_URL = '/home/dash/'                                             # redirecting the login
 
 ########## STATIC FILE CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-root
