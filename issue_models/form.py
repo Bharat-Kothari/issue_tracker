@@ -1,21 +1,31 @@
 from django import forms
-
-# class SignupForm(forms.Form):
-#     emailaddress = forms.EmailField()
-#     password = forms.PasswordInput()
-#     confirm_password = forms.PasswordInput()
-#     first_name = forms.CharField(max_length=100)
-#     last_name =  forms.CharField(max_length=30)
-#     dob = forms.DateField()
-# #
-from django import forms
 from issue_models.models import MyUser
+from django.contrib.auth import authenticate
+from django.http import HttpResponseRedirect
 
 class SignupForm(forms.ModelForm):
+    password=forms.CharField(label="password",widget=forms.PasswordInput())
     confirm_password=forms.CharField(label="confirm password",widget=forms.PasswordInput())
+
     class Meta:
         model = MyUser
-        fields = ['emailaddr', 'first_name', 'last_name', 'dob', 'password']
+        fields = ['emailaddr', 'first_name', 'last_name', 'dob', 'photo', 'password']
+    error_messages = {
+        'password_mismatch':("password mismatch"),
+    }
+
+    def clean_confirm_password(self):
+        password = self.cleaned_data.get("password")
+        confirm_password= self.cleaned_data.get("confirm_password")
+        if password and confirm_password and password!=confirm_password:
+            raise forms.ValidationError(
+                self.error_messages["password_mismatch"],
+                code='password_mismatch')
+
+        # Always return the cleaned data, whether you have changed it or
+        # not.
+
+        return confirm_password
 
     def save(self, commit=True):
             user = super(SignupForm, self).save(commit=False)
@@ -24,53 +34,18 @@ class SignupForm(forms.ModelForm):
                 user.save()
             return user
 
-
-from django.contrib.auth import authenticate
-from issue_models.models import MyUser
-
-
 class LoginForm(forms.Form):
-        emailaddr = forms.EmailField()
-        password=forms.CharField(label="password",widget=forms.PasswordInput())
+    emailaddr= forms.EmailField(label="email address")
+    password = forms.CharField(label="password", widget=forms.PasswordInput)
+    error_messages = {
+        'password_mismatch':("invalid username or password"),
+    }
+    def clean_password(self):
+        password = self.cleaned_data.get("password")
+        emailaddr= self.cleaned_data.get("emailaddr")
+        user = authenticate(emailaddr=emailaddr, password=password)
+        if user is None:
+            raise forms.ValidationError(
+                self.error_messages["password_mismatch"],
+                code='password_mismatch')
 
-        def clean_emailaddr(self):
-            data = self.cleaned_data['emailaddr']
-            if  'emailaddr' not in data:
-                raise forms.ValidationError("You have forgotten about Fred!")
-
-        # Always return the cleaned data, whether you have changed it or
-        # not.
-            return data
-
-
-
-        def clean_password(self):
-            data = self.cleaned_data['password']
-            if not data:
-                raise forms.ValidationError(("Please enter your password"))
-                return data
-
-
-        def clean(self):
-            try:
-                emailaddr = MyUser.objects.get(emailaddr__iexact=self.cleaned_data['emailaddr']).emailaddr
-
-            except MyUser.DoesNotExist:
-                raise forms.ValidationError("No such email registered")
-                password = self.cleaned_data['password']
-
-                self.user = auth.authenticate(emailaddr=emailaddr, password=password)
-                if self.emailaddr1 is None or not self.emailaddr1.is_active:
-                    raise forms.ValidationError(("Email or password is incorrect"))
-                    return self.cleaned_data
-
-        # user = authenticate(emailaddr='emailaddr', password='password')
-        # if user is not None:
-        #     # the password verified for the user
-        #     if user.is_active:
-        #         print("User is valid, active and authenticated")
-        #     else:
-        #         print("The password is valid, but the account has been disabled!")
-        # else:
-        #     # the authentication system was unable to verify the username and password
-        #     print("The username and password were incorrect.")

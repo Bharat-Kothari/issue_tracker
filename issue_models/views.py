@@ -1,93 +1,63 @@
-from django.shortcuts import HttpResponse
-
-# Create your views here.
-from django.http import HttpResponse
-from django.views.generic import View
-
-
-# from django.shortcuts import render
-# from django.http import HttpResponseRedirect
-#
-# from . import form
-#
-# def login_view(request):
-#     log_form = form.LoginInfoForm(request.POST)
-#
-#     render(log_form)
-#
-# """
-# def get_emailaddr(request):
-#     # if this is a POST request we need to process the form data
-#     if request.method == 'POST':
-#         # create a form instance and populate it with data from the request:
-#         form = LoginInfoForm(request.POST)
-#         # check whether it's valid:
-#         if form.is_valid():
-#             # process the data in form.cleaned_data as required
-#             # ...
-#             # redirect to a new URL:
-#             return HttpResponseRedirect('/thanks/')
-
-
-# from django.http import HttpResponse
-# from django.views.generic import View
-# import models
-# class signup(View):
-#     def get(self, request, pk):
-#         person = models.MyUser.objects.get(pk=pk)
-#         return render(
-#             'people/hello.html',
-#             {'person': person}
-#         )
-
-
-from django.views.generic.edit import CreateView, BaseCreateView
+from django.http import HttpResponseRedirect, HttpResponse
+from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView
 from issue_models.models import MyUser
-from django.contrib.auth.hashers import make_password
 from issue_models import form
+from django.contrib.auth import authenticate, login
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+
 class SignupCreate(CreateView):
     form_class = form.SignupForm
     model = MyUser
     template_name = 'issue_models/myuser_form.html'
-    # fields = ['emailaddr', 'password', 'first_name', 'last_name', 'dob']
-    # make_password('password')
-    success_url = '/signup/success/'
-
-
-
-# class Successful(View):
-#     template_name = 'issue_models/successful.html'
-#
-# class Home(View):
-#     template_name = 'issue_models/home.html'
-
-
-
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.views.generic import View
-
-
-
-from issue_models import form
-
-class LoginView(View):
-
+    def form_valid(self, form):
+        emailaddr = self.request.POST['emailaddr']
+        password = self.request.POST['password']
+        form.save()
+        user = authenticate(emailaddr=emailaddr, password=password)
+        login(self.request,user)
+        return HttpResponseRedirect('/home/dash/')
+class Login(FormView):
     form_class = form.LoginForm
-    model = MyUser
-    #fields = ['emailaddr', 'password']
-    initial = {'key': 'value'}
-    template_name = 'issue_models/login.html'
+    template_name = "issue_models/login1.html"
+    def form_valid(self, form):
+        emailaddr = self.request.POST['emailaddr']
+        password = self.request.POST['password']
+        user = authenticate(emailaddr=emailaddr, password=password)
 
-    def get(self, request, *args, **kwargs):
-        form = self.form_class(initial=self.initial)
-        return render(request, self.template_name, {'form': form})
+        if user is not None:
+            # the password verified for the user
+            if user.is_active:
+                login(self.request,user)
+                print("User is valid, active and authenticated")
+                return HttpResponseRedirect('/home/dash/')
+            else:
+                print("The password is valid, but the account has been disabled!")
+                return HttpResponse("invalid")
+        else:
+            # the authentication system was unable to verify the username and password
+            print("The username and password were incorrect.")
+        return HttpResponseRedirect('/home/login1/')
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
-        if form.is_valid():
-            # <process form cleaned data>
-            return HttpResponseRedirect('/success/')
+class logout_view(View):
+    print 'working1'
 
-        return render(request, self.template_name, {'form': form})
 
+    def get(self, request):
+        print 'working2'
+        logout(self.request)
+        print 'working3'
+        return redirect('/home/login1/')
+
+
+class ProfileView(TemplateView):
+
+    template_name = "issue_models/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(ProfileView, self).get_context_data(**kwargs)
+        context['myuser'] = self.request.user
+        return context
+class ProfileUpdate(UpdateView):
+    template_name = "issue_models/upd"

@@ -13,7 +13,7 @@ from django.contrib.auth.admin import UserAdmin
 class otheruser(UserAdmin):
     fieldsets = (
         (None, {'fields': ('emailaddr', 'password')}),
-        (('Personal info'), {'fields': ('first_name', 'last_name', 'dob',)}),
+        (('Personal info'), {'fields': ('first_name', 'last_name', 'dob','photo',)}),
 
     )
     add_fieldsets = (
@@ -30,3 +30,10 @@ class otheruser(UserAdmin):
 
 from .models import MyUser
 admin.site.register(MyUser,otheruser)
+
+
+import  models
+admin.site.register(models.new_project)
+admin.site.register(models.project_member)
+admin.site.register(models.stories)
+

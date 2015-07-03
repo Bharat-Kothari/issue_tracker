@@ -44,6 +44,7 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
     first_name = models.CharField('first name', max_length=30, blank=True)
     last_name = models.CharField('last name', max_length=30, blank=True)
     dob = models.DateField('date of bith', null=True)
+    photo = models.ImageField(blank=True, upload_to='images')
     is_staff = models.BooleanField(('staff status'), default=False,
     help_text=('Designates whether the user can log into this admin '
                     'site.'))
@@ -67,48 +68,41 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
 
 
 
+class new_project(models.Model):
 
-
-# #class user_table(models.Model)
-#
-#     emailadd = models.EmailField(max_length=75 ,primary_key=True)
-#     password=models.CharField(max_length=30)
-#     fname=models.CharField(max_length=50)
-#     lname=models.CharField(max_length=50)
+    emailadd=models.ForeignKey(MyUser)
+    projtitle=models.CharField(max_length=30 ,primary_key=True)
+    description=models.CharField(max_length=500)
 
 
 
-
-# class new_project(models.Model):
-#
-#     emailadd=models.ForeignKey(user_table)
-#     projtitle=models.CharField(max_length=30 ,primary_key=True)
-#     description=models.CharField(max_length=500)
-#
-#
-#
-# class projects_member(models.Model):
-#     projtitle=models.ForeignKey(new_project)
-#     emailadd=models.ForeignKey(user_table)
+class project_member(models.Model):
+    projtitle=models.ForeignKey(new_project)
+    emailadd=models.ForeignKey(MyUser)
 
 
 
-# #class stories(models.Model):
-#     projtitle=models.ForeignKey(new_project)
-#     emailadd=models.ForeignKey(user_table)
-#     storytitle=models.CharField(max_length=50)
-#     description=models.CharField(max_length=500)
-#     assignee = models.ForeignKey(user_table)
-#     estimate=models.IntegerField("in hours")
-#     status_choice=(
-#         ('strtd','started'),
-#         ('finsh','finished'),
-#         ('deliv','delivered')
-#     )
-#     status=models.CharField(max_length=5,choices=status_choice)
-#     scheduled_choice=(
-#         ('ys','yes'),
-#         ('no','no')
-#     )
-#     scheduled=models.CharField(max_length=2,choices=scheduled_choice)
-#     visibilty=models.BooleanField(default=True)
+class stories(models.Model):
+    projtitle=models.ForeignKey(new_project)
+    emailadd=models.ForeignKey(MyUser)
+    storytitle=models.CharField(max_length=50)
+    description=models.CharField(max_length=500)
+    assignee = models.ForeignKey(project_member)
+    estimate=models.IntegerField("in hours")
+    strtd='strtd'
+    finsh='finish'
+    deliv='deliv'
+    status_choice=(
+        (strtd,'started'),
+        (finsh,'finished'),
+        (deliv,'delivered')
+    )
+    status=models.CharField(max_length=5,choices=status_choice)
+    ys='ys'
+    no='no'
+    scheduled_choice=(
+        (ys,'yes'),
+        (no,'no')
+    )
+    scheduled=models.CharField(max_length=2,choices=scheduled_choice)
+    visibilty=models.BooleanField(default=True)

@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterField(
             model_name='myuser',
-            name='dob',
-            field=models.DateField(null=True, verbose_name=b'date of bith'),
+            name='photo',
+            field=models.ImageField(upload_to=b'/images', blank=True),
         ),
     ]
