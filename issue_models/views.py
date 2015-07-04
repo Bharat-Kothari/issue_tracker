@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse_lazy
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView
 from issue_models.models import MyUser
@@ -59,5 +60,12 @@ class ProfileView(TemplateView):
         context = super(ProfileView, self).get_context_data(**kwargs)
         context['myuser'] = self.request.user
         return context
+
 class ProfileUpdate(UpdateView):
-    template_name = "issue_models/upd"
+    template_name = "issue_models/profile_update.html"
+    model = MyUser
+    form_class = form.ProfileUpdateForm
+
+    success_url = reverse_lazy('profile')
+    def get_object(self, queryset=None):
+        return self.request.user

@@ -15,5 +15,6 @@ urlpatterns = [
     url(r'^login1/$', views.Login.as_view()),
     url(r'^dash/logout/$', views.logout_view.as_view(), name='logout'),
     url('^profile/$', views.ProfileView.as_view(),name='profile'),
+    url('^profile/update/$', views.ProfileUpdate.as_view(), name='update_profile'),
 ]
 

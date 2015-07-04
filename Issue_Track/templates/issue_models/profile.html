@@ -11,6 +11,6 @@
         <p>last name  : {{myuser.last_name}}</p>
         <p>date of birth: {{myuser.dob}}</p>
         <img src="{{MEDIA_URL}}{{myuser.photo}}" width="80px" height="80px"/>
-</h2>
+        <a href=" {%url 'update_profile' %}"> update </a></h2>
 </body>
 </html>

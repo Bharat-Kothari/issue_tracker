@@ -49,3 +49,7 @@ class LoginForm(forms.Form):
                 self.error_messages["password_mismatch"],
                 code='password_mismatch')
 
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model=MyUser
+        fields = ['first_name', 'last_name', 'dob', 'photo',]
