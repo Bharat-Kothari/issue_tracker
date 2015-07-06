@@ -66,28 +66,24 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
 
     USERNAME_FIELD = 'emailaddr'
 
+    def __str__(self):
+        return self.emailaddr
+
 
 
 class new_project(models.Model):
 
-    emailadd=models.ForeignKey(MyUser)
+    projectmanager=models.ForeignKey(MyUser, related_name='Manager')
     projtitle=models.CharField(max_length=30 ,primary_key=True)
     description=models.CharField(max_length=500)
-
-
-
-class project_member(models.Model):
-    projtitle=models.ForeignKey(new_project)
-    emailadd=models.ForeignKey(MyUser)
-
-
+    Assigned_to=models.ManyToManyField(MyUser)
 
 class stories(models.Model):
     projtitle=models.ForeignKey(new_project)
-    emailadd=models.ForeignKey(MyUser)
+    emailaddr=models.ForeignKey(MyUser,related_name='Story_Creator')
     storytitle=models.CharField(max_length=50)
     description=models.CharField(max_length=500)
-    assignee = models.ForeignKey(project_member)
+    assignee = models.ForeignKey(MyUser)
     estimate=models.IntegerField("in hours")
     strtd='strtd'
     finsh='finish'

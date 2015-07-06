@@ -72,6 +72,7 @@ MEDIA_ROOT = normpath(join(BASE_DIR, 'media'))
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = '/media/'
 ########## END MEDIA CONFIGURATION
+LOGIN_URL='/home/login/'
 
 
 LOGIN_REDIRECT_URL = '/home/dash/'                                             # redirecting the login

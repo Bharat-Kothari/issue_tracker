@@ -1,8 +1,8 @@
 from django import forms
-from issue_models.models import MyUser
+from django.forms import ModelMultipleChoiceField
+from issue_models.models import MyUser, new_project
 from django.contrib.auth import authenticate
 from django.http import HttpResponseRedirect
-
 class SignupForm(forms.ModelForm):
     password=forms.CharField(label="password",widget=forms.PasswordInput())
     confirm_password=forms.CharField(label="confirm password",widget=forms.PasswordInput())
@@ -53,3 +53,24 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model=MyUser
         fields = ['first_name', 'last_name', 'dob', 'photo',]
+
+
+class CreateProjectForm(forms.ModelForm):
+
+    class Meta:
+        model=new_project
+        fields = ['projtitle', 'description', 'Assigned_to']
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super(CreateProjectForm, self).__init__(*args, **kwargs)
+        self.fields['Assigned_to'].widget = forms.CheckboxSelectMultiple()
+        self.fields["Assigned_to"].queryset = MyUser.objects.all()
+
+
+    def save(self, commit=True):
+            print 'abc'
+            user1 = super(CreateProjectForm, self).save(commit=False)
+            user1.projectmanager = self.request.user
+            print 'abc1'
+            user1.save()
+            self.save_m2m();

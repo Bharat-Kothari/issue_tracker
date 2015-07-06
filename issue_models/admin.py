@@ -34,6 +34,5 @@ admin.site.register(MyUser,otheruser)
 
 import  models
 admin.site.register(models.new_project)
-admin.site.register(models.project_member)
 admin.site.register(models.stories)
 
