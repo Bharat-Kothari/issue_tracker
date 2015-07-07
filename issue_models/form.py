@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import ModelMultipleChoiceField
-from issue_models.models import MyUser, new_project
+from issue_models.models import MyUser, new_project, stories
 from django.contrib.auth import authenticate
 from django.http import HttpResponseRedirect
 class SignupForm(forms.ModelForm):
@@ -74,3 +74,30 @@ class CreateProjectForm(forms.ModelForm):
             print 'abc1'
             user1.save()
             self.save_m2m();
+            user1.Assigned_to.add(self.request.user)
+            return user1
+
+
+
+class ProjectForm(forms.ModelForm):
+    model=new_project
+    fields = fields = ['projtitle', 'description', 'Assigned_to']
+
+
+
+class AddStoryForm(forms.ModelForm):
+    class Meta:
+        model=stories
+        fields=['storytitle', 'description','assignee', 'estimate', 'status','scheduled']
+    def __init__(self, *args, **kwargs):
+        self.project_key = kwargs.pop('project')
+        self.user=kwargs.pop('user')
+        super(AddStoryForm, self).__init__(*args, **kwargs)
+    def save(self, commit=True):
+            print 'abc'
+            user1 = super(AddStoryForm, self).save(commit=False)
+            user1.projtitle = self.project_key
+            user1.emailaddr = self.user
+            print 'abc1'
+            user1.save()
+            return user1

@@ -28,6 +28,9 @@ class otheruser(UserAdmin):
     search_fields = ('emailaddr', 'first_name', 'last_name',)
     ordering = ('emailaddr',)
 
+
+
+
 from .models import MyUser
 admin.site.register(MyUser,otheruser)
 

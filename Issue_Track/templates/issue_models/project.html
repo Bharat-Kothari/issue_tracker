@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    <h2><p>manager name :{{object.projectmanager}}</p>
+    <p>project name :{{object.projtitle}}</p>
+    <p>Description : {{ object.description}}</p>
+    {% for assigned in object.Assigned_to.all %}
+     <p>assigned to :{{assigned.emailaddr }}</p>
+    {% endfor %}
+        {% if object.projectmanager == user %}
+        <a href="{% url 'updateproject' object.projtitle %}">update</a>
+        {% endif %}
+
+
+    {% for story in stories %}
+    <li>{{story.storytitle}}</li>
+    {% endfor %}
+        <!--{% for story in object.stories_set.all %}-->
+        <!--<li>{{story.storytitle}}</li>-->
+    <!--{% endfor%}-->
+    <a href="{% url 'addstory' object.projtitle %}">Addstory</a>
+    </h2>
+</body>
+</html>

@@ -78,7 +78,11 @@ class new_project(models.Model):
     description=models.CharField(max_length=500)
     Assigned_to=models.ManyToManyField(MyUser)
 
+    def __unicode__(self):
+        return self.projtitle
+
 class stories(models.Model):
+
     projtitle=models.ForeignKey(new_project)
     emailaddr=models.ForeignKey(MyUser,related_name='Story_Creator')
     storytitle=models.CharField(max_length=50)

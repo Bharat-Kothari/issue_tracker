@@ -8,7 +8,17 @@
 <h2><a href="{% url 'logout' %}">logout</a></h2>
 <h2><a href="{% url 'profile' %}">profile info</a></h2>
 <h2><a href="{% url 'create' %}">create project</a></h2>
+
+    <h2>Dash Board</h2>
+    <ul>
+        {% for project in object_list %}
+
+            <li>project name :<a href="{% url 'project' project.projtitle %}">{{ project.projtitle}}</a> </li>
+        {% endfor %}
+    </ul>
+
 <h6> DASH BOARD</h6>
+
 
 
 </body>

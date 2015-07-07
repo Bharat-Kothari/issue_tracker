@@ -14,6 +14,8 @@ urlpatterns = [
     url(r'^dash/logout/$', views.logout_view.as_view(), name='logout'),
     url(r'^profile/$', views.ProfileView.as_view(),name='profile'),
     url(r'^profile/update/$', views.ProfileUpdate.as_view(), name='update_profile'),
-
+    url(r'^project/(?P<pk>[a-z ]+)/$', views.ProjectView.as_view(), name='project'),
+    url(r'^projects/update/(?P<pk>[a-z ]+)/$', views.ProjectUpdate.as_view(), name='updateproject'),
+    url(r'^projects/addstory/(?P<pk>[a-z ]+)/$', views.AddStory.as_view(), name='addstory'),
 ]
 

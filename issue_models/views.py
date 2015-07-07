@@ -1,8 +1,8 @@
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView
-from issue_models.models import MyUser, new_project
+from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView, DetailView, ListView
+from issue_models.models import MyUser, new_project, stories
 from issue_models import form
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
@@ -64,11 +64,14 @@ class logout_view(View):
         print 'working3'
         return redirect('/home/login/')
 
-class Dash(TemplateView):
+class Dash(ListView):
     template_name="issue_models/dash.html"
+    model = new_project
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(Dash, self).dispatch(request, *args, **kwargs)
+    def get_queryset(self):
+        return new_project.objects.filter(Assigned_to=self.request.user )
 
 class ProfileView(TemplateView):
 
@@ -100,8 +103,50 @@ class CreateProject(CreateView):
     template_name = "issue_models/createproject.html"
     model = new_project
     form_class = form.CreateProjectForm
+    success_url = reverse_lazy('dashboard')
 
     def get_form_kwargs(self):
         kwargs = super(CreateProject, self).get_form_kwargs()
         kwargs['request'] = self.request
+        return kwargs
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CreateProject, self).dispatch(request, *args, **kwargs)
+
+
+
+
+
+class ProjectView(DetailView):
+
+    template_name = "issue_models/project.html"
+    model = new_project
+
+    def get_context_data(self, **kwargs):
+        context = super(ProjectView, self).get_context_data(**kwargs)
+        context['stories'] = stories.objects.filter(projtitle=self.object.projtitle)
+        return context
+
+class ProjectUpdate(UpdateView):
+    template_name = "issue_models/updateproject.html"
+    model = new_project
+    form_class = form.CreateProjectForm
+
+    def get_form_kwargs(self):
+        kwargs = super(ProjectUpdate, self).get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+    success_url = reverse_lazy('dashboard')
+
+
+class AddStory(CreateView):
+    model = stories
+    form_class = form.AddStoryForm
+    template_name = "issue_models/addstory.html"
+    success_url = reverse_lazy( 'dashboard' )
+    def get_form_kwargs(self):
+        kwargs = super(AddStory, self).get_form_kwargs()
+        kwargs['project'] = new_project.objects.get(pk=self.kwargs['pk'])
+        kwargs['user'] = self.request.user
         return kwargs
