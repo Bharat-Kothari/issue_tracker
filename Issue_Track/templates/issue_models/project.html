@@ -8,20 +8,25 @@
     <h2><p>manager name :{{object.projectmanager}}</p>
     <p>project name :{{object.projtitle}}</p>
     <p>Description : {{ object.description}}</p>
-    {% for assigned in object.Assigned_to.all %}
-     <p>assigned to :{{assigned.emailaddr }}</p>
-    {% endfor %}
-        {% if object.projectmanager == user %}
+    {% if object.projectmanager == user %}
         <a href="{% url 'updateproject' object.projtitle %}">update</a>
-        {% endif %}
-
-
-    {% for story in stories %}
-    <li>{{story.storytitle}}</li>
-    {% endfor %}
+    {% endif %}
+    </h2>
+    <h1>Scheduled</h1>
+    <h2>{% for story in started %}
+    <li><a href="{% url 'storyview' story.id %}"> {{story.storytitle}}</a></li>
+        {% endfor %}
+        {% for story in unstarted %}
+    <li><a href="{% url 'storyview' story.id %}">{{story.storytitle}}</a></li>
+        {% endfor %}
         <!--{% for story in object.stories_set.all %}-->
         <!--<li>{{story.storytitle}}</li>-->
     <!--{% endfor%}-->
+
+    <h1>UnScheduled</h1>
+    {% for story in unsch_story %}
+    <li><a href="{% url 'storyview' story.id %}">{{story.storytitle}}</a></li>
+    {% endfor %}
     <a href="{% url 'addstory' object.projtitle %}">Addstory</a>
     </h2>
 </body>

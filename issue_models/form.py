@@ -4,8 +4,8 @@ from issue_models.models import MyUser, new_project, stories
 from django.contrib.auth import authenticate
 from django.http import HttpResponseRedirect
 class SignupForm(forms.ModelForm):
-    password=forms.CharField(label="password",widget=forms.PasswordInput())
-    confirm_password=forms.CharField(label="confirm password",widget=forms.PasswordInput())
+    password=forms.CharField(label="password",min_length=6, widget=forms.PasswordInput())
+    confirm_password=forms.CharField(label="confirm password",min_length=6, widget=forms.PasswordInput())
 
     class Meta:
         model = MyUser
@@ -88,7 +88,7 @@ class ProjectForm(forms.ModelForm):
 class AddStoryForm(forms.ModelForm):
     class Meta:
         model=stories
-        fields=['storytitle', 'description','assignee', 'estimate', 'status','scheduled']
+        fields=['storytitle', 'description','assignee', 'estimate','scheduled']
     def __init__(self, *args, **kwargs):
         self.project_key = kwargs.pop('project')
         self.user=kwargs.pop('user')
@@ -101,3 +101,21 @@ class AddStoryForm(forms.ModelForm):
             print 'abc1'
             user1.save()
             return user1
+class UpdateStoryForm(forms.ModelForm):
+    class Meta:
+        model=stories
+        fields=['storytitle', 'description','assignee', 'estimate','scheduled', 'status']
+    error_messages = {
+        'unscheduled':("This has to be unstarted when it is not scheduled"),
+    }
+    def clean_status(self):
+        status = self.cleaned_data.get("status")
+        scheduled= self.cleaned_data.get("scheduled")
+        if scheduled== 'no' and status != 'unstrtd':
+            raise forms.ValidationError(
+            self.error_messages["unscheduled"],
+            code='unscheduled')
+            return 'strted'
+        return status
+
+

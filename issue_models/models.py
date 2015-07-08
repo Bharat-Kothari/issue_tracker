@@ -89,15 +89,17 @@ class stories(models.Model):
     description=models.CharField(max_length=500)
     assignee = models.ForeignKey(MyUser)
     estimate=models.IntegerField("in hours")
+    unstrtd='unstrtd'
     strtd='strtd'
     finsh='finish'
     deliv='deliv'
     status_choice=(
+        (unstrtd,'notstarted'),
         (strtd,'started'),
         (finsh,'finished'),
         (deliv,'delivered')
     )
-    status=models.CharField(max_length=5,choices=status_choice)
+    status=models.CharField(max_length=7,choices=status_choice,default=unstrtd)
     ys='ys'
     no='no'
     scheduled_choice=(
@@ -106,3 +108,5 @@ class stories(models.Model):
     )
     scheduled=models.CharField(max_length=2,choices=scheduled_choice)
     visibilty=models.BooleanField(default=True)
+    def __unicode__(self):
+        return self.storytitle

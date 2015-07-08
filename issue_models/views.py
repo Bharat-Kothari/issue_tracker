@@ -6,7 +6,7 @@ from issue_models.models import MyUser, new_project, stories
 from issue_models import form
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 
 
@@ -125,7 +125,21 @@ class ProjectView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(ProjectView, self).get_context_data(**kwargs)
-        context['stories'] = stories.objects.filter(projtitle=self.object.projtitle)
+        story_all = stories.objects.filter(projtitle=self.object.projtitle)
+        print 'all story : ', story_all.count()
+        story=  story_all.filter(visibilty=True)
+        print 'visible : ', story.count()
+        sch_story= story.filter(scheduled='ys')
+        print 'scheduled count : ', sch_story.count()
+        unsch_story=story.filter(scheduled='no')
+        print 'unscheduled count : ', unsch_story.count()
+        unstarted=sch_story.filter(status='unstrtd')
+        print 'unstarted : ', unstarted.count()
+        started=sch_story.exclude(status='unstrtd')
+        print 'started : ', started.count()
+        context['started']=started
+        context['unstarted']=unstarted
+        context['unsch_story'] = unsch_story
         return context
 
 class ProjectUpdate(UpdateView):
@@ -144,9 +158,35 @@ class AddStory(CreateView):
     model = stories
     form_class = form.AddStoryForm
     template_name = "issue_models/addstory.html"
-    success_url = reverse_lazy( 'dashboard' )
+    # success_url = reverse_lazy( 'dashboard' )
     def get_form_kwargs(self):
         kwargs = super(AddStory, self).get_form_kwargs()
         kwargs['project'] = new_project.objects.get(pk=self.kwargs['pk'])
         kwargs['user'] = self.request.user
         return kwargs
+    def get_success_url(self):
+        projecttitle = self.object.projtitle
+        return reverse('project', kwargs={'pk': projecttitle})
+class StoryView(DetailView):
+    model = stories
+    template_name = "issue_models/viewstory.html"
+
+
+
+
+class UpdateStory(UpdateView):
+    model = stories
+    template_name ="issue_models/addstory.html"
+    form_class = form.UpdateStoryForm
+    def get_success_url(self):
+        projecttitle = self.object.projtitle
+        return reverse('project', kwargs={'pk': projecttitle})
+
+class StoryDelete(View):
+    def dispatch(self, request, *args, **kwargs):
+        id=kwargs.get('pk')
+        story = get_object_or_404(stories, pk=id)
+        story.visibilty = False
+        story.save()
+        projecttitle = story.projtitle
+        return HttpResponseRedirect(reverse_lazy('project',kwargs={'pk':projecttitle}))
