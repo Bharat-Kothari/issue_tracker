@@ -2,13 +2,14 @@ from django.core.urlresolvers import reverse_lazy, reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView, DetailView, ListView
+from Issue_Track import settings
 from issue_models.models import MyUser, new_project, stories
 from issue_models import form
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-
+from django.core.mail import send_mail
 
 def login_check(f):
     def check_authentication(request, *args):
@@ -28,6 +29,11 @@ class SignupCreate(CreateView):
         emailaddr = self.request.POST['emailaddr']
         password = self.request.POST['password']
         form.save()
+        subject = 'Successful registration'
+        message = ' You have been succesuffully registered in issue tracker'
+        from_email = settings.EMAIL_HOST_USER
+        tomail=emailaddr
+        send_mail(subject, message, from_email, [tomail], fail_silently=True)
         user = authenticate(emailaddr=emailaddr, password=password)
         login(self.request,user)
         return HttpResponseRedirect('/home/dash/')
@@ -70,9 +76,21 @@ class Dash(ListView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(Dash, self).dispatch(request, *args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context=super(Dash, self).get_context_data(**kwargs)
+        context['filter_code']= self.request.GET.get('id')
+        return context
     def get_queryset(self):
+        filter_id=self.request.GET.get('id')
+        if filter_id == '1':
+            return new_project.objects.filter(Assigned_to=self.request.user )
+        if filter_id == '3':
+            return new_project.objects.filter(projectmanager=self.request.user)
+        if filter_id == '2':
+            temp= new_project.objects.exclude(projectmanager=self.request.user)
+            member=temp.filter(Assigned_to=self.request.user)
+            return member
         return new_project.objects.filter(Assigned_to=self.request.user )
-
 class ProfileView(TemplateView):
 
     template_name = "issue_models/profile.html"
@@ -110,6 +128,9 @@ class CreateProject(CreateView):
         kwargs['request'] = self.request
         return kwargs
 
+
+
+
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(CreateProject, self).dispatch(request, *args, **kwargs)
@@ -126,12 +147,11 @@ class ProjectView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(ProjectView, self).get_context_data(**kwargs)
         story_all = stories.objects.filter(projtitle=self.object.projtitle)
-        print 'all story : ', story_all.count()
-        story=  story_all.filter(visibilty=True)
-        print 'visible : ', story.count()
-        sch_story= story.filter(scheduled='ys')
+        story_visible = story_all.filter(visibilty=True).order_by('date')
+        print 'visible : ', story_visible.count()
+        sch_story= story_visible.filter(scheduled='ys')
         print 'scheduled count : ', sch_story.count()
-        unsch_story=story.filter(scheduled='no')
+        unsch_story=story_visible.filter(scheduled='no')
         print 'unscheduled count : ', unsch_story.count()
         unstarted=sch_story.filter(status='unstrtd')
         print 'unstarted : ', unstarted.count()
@@ -165,7 +185,16 @@ class AddStory(CreateView):
         kwargs['user'] = self.request.user
         return kwargs
     def get_success_url(self):
+
+        subject = self.object.storytitle
+        print subject
+        message = ' You have been assigned to story'
+        from_email = settings.EMAIL_HOST_USER
+        tomail=self.object.assignee.emailaddr
+        print tomail
+        send_mail(subject, message, from_email, [tomail], fail_silently=True)
         projecttitle = self.object.projtitle
+        print projecttitle
         return reverse('project', kwargs={'pk': projecttitle})
 class StoryView(DetailView):
     model = stories
@@ -179,6 +208,13 @@ class UpdateStory(UpdateView):
     template_name ="issue_models/addstory.html"
     form_class = form.UpdateStoryForm
     def get_success_url(self):
+        subject = self.object.storytitle
+        print subject
+        message = ' You have been assigned to story'
+        from_email = settings.EMAIL_HOST_USER
+        tomail=self.object.assignee.emailaddr
+        print tomail
+        send_mail(subject, message, from_email, [tomail], fail_silently=True)
         projecttitle = self.object.projtitle
         return reverse('project', kwargs={'pk': projecttitle})
 

@@ -1,10 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
+{% extends "issue_models/base.html" %}
+{% block content %}
+
     <h2><p>manager name :{{object.projectmanager}}</p>
     <p>project name :{{object.projtitle}}</p>
     <p>Description : {{ object.description}}</p>
@@ -12,7 +8,9 @@
         <a href="{% url 'updateproject' object.projtitle %}">update</a>
     {% endif %}
     </h2>
-    <h1>Scheduled</h1>
+     <h2><a href="{% url 'addstory' object.projtitle %}">Addstory</a></h2>
+    <h1>Story</h1>
+    <h2>Scheduled</h2>
     <h2>{% for story in started %}
     <li><a href="{% url 'storyview' story.id %}"> {{story.storytitle}}</a></li>
         {% endfor %}
@@ -22,12 +20,10 @@
         <!--{% for story in object.stories_set.all %}-->
         <!--<li>{{story.storytitle}}</li>-->
     <!--{% endfor%}-->
-
-    <h1>UnScheduled</h1>
-    {% for story in unsch_story %}
+    </h2>
+    <h2>UnScheduled</h2>
+    <h2>{% for story in unsch_story %}
     <li><a href="{% url 'storyview' story.id %}">{{story.storytitle}}</a></li>
     {% endfor %}
-    <a href="{% url 'addstory' object.projtitle %}">Addstory</a>
     </h2>
-</body>
-</html>
+{%endblock%}

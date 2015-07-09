@@ -1,10 +1,12 @@
 from django import forms
-from django.forms import ModelMultipleChoiceField
+from django.core.mail import send_mail
+from django.core.validators import RegexValidator
+from Issue_Track import settings
 from issue_models.models import MyUser, new_project, stories
 from django.contrib.auth import authenticate
-from django.http import HttpResponseRedirect
 class SignupForm(forms.ModelForm):
-    password=forms.CharField(label="password",min_length=6, widget=forms.PasswordInput())
+    password=forms.CharField(label="password",min_length=6, widget=forms.PasswordInput(),
+            validators= [RegexValidator(regex ='(?=.*[0-9])(?=.*[!@#$%^&*()-+])', message="enter proper password")])
     confirm_password=forms.CharField(label="confirm password",min_length=6, widget=forms.PasswordInput())
 
     class Meta:
@@ -74,7 +76,14 @@ class CreateProjectForm(forms.ModelForm):
             print 'abc1'
             user1.save()
             self.save_m2m();
+            subject = user1.projtitle
+            message = ' You have been added in the project'
+            from_email = settings.EMAIL_HOST_USER
+            for assigned_user in user1.Assigned_to.all():
+                tomail=assigned_user.emailaddr
+                send_mail(subject, message, from_email, [tomail], fail_silently=True)
             user1.Assigned_to.add(self.request.user)
+
             return user1
 
 

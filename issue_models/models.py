@@ -1,3 +1,4 @@
+from datetime import datetime
 from wsgiref.validate import validator
 from django.contrib.auth.models import User, AbstractBaseUser, PermissionsMixin, BaseUserManager
 
@@ -89,6 +90,7 @@ class stories(models.Model):
     description=models.CharField(max_length=500)
     assignee = models.ForeignKey(MyUser)
     estimate=models.IntegerField("in hours")
+    date= models.DateField(default=datetime.now)
     unstrtd='unstrtd'
     strtd='strtd'
     finsh='finish'

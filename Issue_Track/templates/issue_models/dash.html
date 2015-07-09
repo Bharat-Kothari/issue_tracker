@@ -1,19 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
-<select>
-  <option value="both">both</option>
-  <option value="owner">owner</option>
-  <option value="member">member</option>
-</select>
-<h2><a href="{% url 'logout' %}">logout</a></h2>
-<h2><a href="{% url 'profile' %}">profile info</a></h2>
-<h2><a href="{% url 'create' %}">create project</a></h2>
-
+{% extends "issue_models/base.html" %}
+{% block content %}
+<h2><a href="{% url 'logout' %}">logout</a>
+<a href="{% url 'profile' %}">profile info</a>
+<a href="{% url 'create' %}">create project</a></h2>
+  <select name="filter" class="styled" onclick="document.location = this.value" value="GO" >
+      {{filter_code}}
+       <option value="{% url 'dashboard' %}?id=1" {% if filter_code == '1' %} selected {% endif %}>All</option>
+       <option value="{% url 'dashboard' %}?id=2" {% if filter_code == '2' %} selected {% endif %}>Project Member</option>
+       <option value="{% url 'dashboard' %}?id=3" {% if filter_code == '3' %} selected {% endif %}>Owner</option>
+  </select>
     <h2>Dash Board</h2>
     <ul>
         {% for project in object_list %}
@@ -23,7 +18,4 @@
     </ul>
 
 <h6> DASH BOARD</h6>
-
-
-</body>
-</html>
+{% endblock %}
