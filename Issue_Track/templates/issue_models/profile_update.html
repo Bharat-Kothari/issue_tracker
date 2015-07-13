@@ -2,9 +2,13 @@
 {% block content %}
 
 <img src="{{MEDIA_URL}}{{object.photo}}" width="80px" height="80px"/>
+<p>
 
+</p>
 <form action="" method="post" enctype="multipart/form-data">{% csrf_token %}
+    Emailaddress : <input type="text" value="{{user.email}}" disabled>
     {{ form.as_p }}
+
     <input type="submit" value="Update" />
 </form>
 {%endblock%}

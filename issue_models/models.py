@@ -1,23 +1,24 @@
-from datetime import datetime
-from wsgiref.validate import validator
 from django.contrib.auth.models import User, AbstractBaseUser, PermissionsMixin, BaseUserManager
-
 from django.db import models
 
+from datetime import datetime
+
 # Create your models here.
+
+
 class MyUserManager(BaseUserManager):
     # use_in_migrations = True
 
-    def _create_user(self, emailaddr, password,
+    def _create_user(self, email, password,
                      is_staff, is_superuser, **extra_fields):
         """
         Creates and saves a User with the given username, email and password.
         """
 
-        if not emailaddr:
+        if not email:
             raise ValueError('The given username must be set')
 
-        user = self.model(emailaddr=emailaddr,
+        user = self.model(email=email,
                           is_staff=is_staff, is_active=True,
                           is_superuser=is_superuser,
                           **extra_fields)
@@ -25,33 +26,35 @@ class MyUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_user(self, emailaddr, password=None, **extra_fields):
-        return self._create_user(emailaddr, password, False, False,
+    def create_user(self, email, password=None, **extra_fields):
+        return self._create_user(email, password, False, False,
                                  **extra_fields)
 
-    def create_superuser(self, emailaddr, password, **extra_fields):
-        return self._create_user(emailaddr, password, True, True,
+    def create_superuser(self, email, password, **extra_fields):
+        return self._create_user(email, password, True, True,
                                  **extra_fields)
 
 
-class MyUser(AbstractBaseUser,PermissionsMixin):
+class MyUser(AbstractBaseUser, PermissionsMixin):
 
-    emailaddr = models.EmailField(('emailaddr'), max_length=50, unique=True,
+    email = models.EmailField(('email'), max_length=50, unique=True,
         help_text=('Required. 50 characters or fewer. Letters, digits and '
                     '@/./+/-/_ only.'),
         error_messages={
-            'unique': ("A emailaddr with that already exists."),
+            'unique': ("A email with that already exists."),
         })
     first_name = models.CharField('first name', max_length=30, blank=True)
     last_name = models.CharField('last name', max_length=30, blank=True)
-    dob = models.DateField('date of bith', null=True)
+    dob = models.DateField('date of birth', null=True)
     photo = models.ImageField(blank=True, upload_to='images')
     is_staff = models.BooleanField(('staff status'), default=False,
     help_text=('Designates whether the user can log into this admin '
                     'site.'))
+
     is_active = models.BooleanField(('active'), default=True,
         help_text=('Designates whether this user should be treated as '
                     'active. Unselect this instead of deleting accounts.'))
+
     def get_full_name(self):
         """
         Returns the first_name plus the last_name, with a space in between.
@@ -65,50 +68,51 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
 
     objects = MyUserManager()
 
-    USERNAME_FIELD = 'emailaddr'
+    USERNAME_FIELD = 'email'
 
     def __str__(self):
-        return self.emailaddr
+        return self.email
 
 
+class Project(models.Model):
 
-class new_project(models.Model):
-
-    projectmanager=models.ForeignKey(MyUser, related_name='Manager')
-    projtitle=models.CharField(max_length=30 ,primary_key=True)
-    description=models.CharField(max_length=500)
-    Assigned_to=models.ManyToManyField(MyUser)
+    project_manager = models.ForeignKey(MyUser, related_name='Manager')
+    project_title = models.CharField(max_length=30)
+    description = models.CharField(max_length=500)
+    Assigned_to = models.ManyToManyField(MyUser)
 
     def __unicode__(self):
-        return self.projtitle
+        return self.project_title
 
-class stories(models.Model):
 
-    projtitle=models.ForeignKey(new_project)
-    emailaddr=models.ForeignKey(MyUser,related_name='Story_Creator')
-    storytitle=models.CharField(max_length=50)
-    description=models.CharField(max_length=500)
+class Story(models.Model):
+
+    project_title = models.ForeignKey(Project)
+    email = models.ForeignKey(MyUser, related_name='Story_Creator')
+    story_title = models.CharField(max_length=50)
+    description = models.CharField(max_length=500)
     assignee = models.ForeignKey(MyUser)
-    estimate=models.IntegerField("in hours")
-    date= models.DateField(default=datetime.now)
-    unstrtd='unstrtd'
-    strtd='strtd'
+    estimate = models.IntegerField("in hours")
+    date = models.DateField(default=datetime.now)
+    unstrtd = 'unstrtd'
+    strtd = 'strtd'
     finsh='finish'
-    deliv='deliv'
-    status_choice=(
-        (unstrtd,'notstarted'),
-        (strtd,'started'),
-        (finsh,'finished'),
-        (deliv,'delivered')
+    deliv = 'deliv'
+    status_choice = (
+        (unstrtd, 'notstarted'),
+        (strtd, 'started'),
+        (finsh, 'finished'),
+        (deliv, 'delivered')
     )
-    status=models.CharField(max_length=7,choices=status_choice,default=unstrtd)
-    ys='ys'
-    no='no'
-    scheduled_choice=(
-        (ys,'yes'),
-        (no,'no')
+    status = models.CharField(max_length=7, choices=status_choice, default=unstrtd)
+    ys = 'ys'
+    no = 'no'
+    scheduled_choice = (
+        (ys, 'yes'),
+        (no, 'no')
     )
-    scheduled=models.CharField(max_length=2,choices=scheduled_choice)
-    visibilty=models.BooleanField(default=True)
+    scheduled = models.CharField(max_length=2, choices=scheduled_choice)
+    visibility = models.BooleanField(default=True)
+
     def __unicode__(self):
-        return self.storytitle
+        return self.story_title

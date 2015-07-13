@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 from django.conf import settings
+import datetime
 
 
 class Migration(migrations.Migration):
@@ -19,10 +20,10 @@ class Migration(migrations.Migration):
                 ('password', models.CharField(max_length=128, verbose_name='password')),
                 ('last_login', models.DateTimeField(null=True, verbose_name='last login', blank=True)),
                 ('is_superuser', models.BooleanField(default=False, help_text='Designates that this user has all permissions without explicitly assigning them.', verbose_name='superuser status')),
-                ('emailaddr', models.EmailField(help_text=b'Required. 50 characters or fewer. Letters, digits and @/./+/-/_ only.', unique=True, max_length=50, verbose_name=b'emailaddr', error_messages={b'unique': b'A emailaddr with that already exists.'})),
+                ('email', models.EmailField(help_text=b'Required. 50 characters or fewer. Letters, digits and @/./+/-/_ only.', unique=True, max_length=50, verbose_name=b'email', error_messages={b'unique': b'A email with that already exists.'})),
                 ('first_name', models.CharField(max_length=30, verbose_name=b'first name', blank=True)),
                 ('last_name', models.CharField(max_length=30, verbose_name=b'last name', blank=True)),
-                ('dob', models.DateField(null=True, verbose_name=b'date of bith')),
+                ('dob', models.DateField(null=True, verbose_name=b'date of birth')),
                 ('photo', models.ImageField(upload_to=b'images', blank=True)),
                 ('is_staff', models.BooleanField(default=False, help_text=b'Designates whether the user can log into this admin site.', verbose_name=b'staff status')),
                 ('is_active', models.BooleanField(default=True, help_text=b'Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name=b'active')),
@@ -34,27 +35,29 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='new_project',
+            name='Project',
             fields=[
-                ('projtitle', models.CharField(max_length=30, serialize=False, primary_key=True)),
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('project_title', models.CharField(max_length=30)),
                 ('description', models.CharField(max_length=500)),
                 ('Assigned_to', models.ManyToManyField(to=settings.AUTH_USER_MODEL)),
-                ('projectmanager', models.ForeignKey(related_name='Manager', to=settings.AUTH_USER_MODEL)),
+                ('project_manager', models.ForeignKey(related_name='Manager', to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
-            name='stories',
+            name='Story',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('storytitle', models.CharField(max_length=50)),
+                ('story_title', models.CharField(max_length=50)),
                 ('description', models.CharField(max_length=500)),
                 ('estimate', models.IntegerField(verbose_name=b'in hours')),
-                ('status', models.CharField(max_length=5, choices=[(b'strtd', b'started'), (b'finish', b'finished'), (b'deliv', b'delivered')])),
+                ('date', models.DateField(default=datetime.datetime.now)),
+                ('status', models.CharField(default=b'unstrtd', max_length=7, choices=[(b'unstrtd', b'notstarted'), (b'strtd', b'started'), (b'finish', b'finished'), (b'deliv', b'delivered')])),
                 ('scheduled', models.CharField(max_length=2, choices=[(b'ys', b'yes'), (b'no', b'no')])),
-                ('visibilty', models.BooleanField(default=True)),
+                ('visibility', models.BooleanField(default=True)),
                 ('assignee', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('emailaddr', models.ForeignKey(related_name='Story_Creator', to=settings.AUTH_USER_MODEL)),
-                ('projtitle', models.ForeignKey(to='issue_models.new_project')),
+                ('email', models.ForeignKey(related_name='Story_Creator', to=settings.AUTH_USER_MODEL)),
+                ('project_title', models.ForeignKey(to='issue_models.Project')),
             ],
         ),
     ]

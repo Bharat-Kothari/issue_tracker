@@ -1,11 +1,15 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
 
-<h2>
-        Emailaddress :{{ myuser.emailaddr}}
+
+    <h2><a href="{% url 'logout' %}">logout</a>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'create' %}">create project</a>
+        <a href=" {%url 'update_profile' %}"> update profile </a></h2>
+    <h2>   Emailaddress :{{ myuser.email}}
         <p>first name :{{myuser.first_name}}</p>
         <p>last name  : {{myuser.last_name}}</p>
         <p>date of birth: {{myuser.dob}}</p>
         <img src="{{MEDIA_URL}}{{myuser.photo}}" width="80px" height="80px"/>
-        <a href=" {%url 'update_profile' %}"> update </a></h2>
+        </h2>
 {%endblock%}

@@ -2,95 +2,99 @@ from django.core.urlresolvers import reverse_lazy, reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView, DetailView, ListView
-from Issue_Track import settings
-from issue_models.models import MyUser, new_project, stories
-from issue_models import form
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
+from Issue_Track import settings
+from issue_models.models import MyUser, Project, Story
+from issue_models import form
+
 
 def login_check(f):
     def check_authentication(request, *args):
         if request.user.is_authenticated():
-            print 'bharat'
-            return redirect('/home/dash/')
+            return redirect(reverse_lazy('dashboard'))
         else:
             return f(request)
     return check_authentication
 
 
-class SignupCreate(CreateView):
+class SignupView(CreateView):
     form_class = form.SignupForm
-    model = MyUser
     template_name = 'issue_models/myuser_form.html'
+
     def form_valid(self, form):
-        emailaddr = self.request.POST['emailaddr']
-        password = self.request.POST['password']
+        email = form.cleaned_data['email']
+        password = form.cleaned_data['password']
+        print password
         form.save()
         subject = 'Successful registration'
-        message = ' You have been succesuffully registered in issue tracker'
+        message = ' You have been successfully registered in issue tracker'
         from_email = settings.EMAIL_HOST_USER
-        tomail=emailaddr
-        send_mail(subject, message, from_email, [tomail], fail_silently=True)
-        user = authenticate(emailaddr=emailaddr, password=password)
+        to_mail = email
+        send_mail(subject, message, from_email, [to_mail], fail_silently=True)
+        user = authenticate(email=email, password=password)
+        print user
         login(self.request,user)
-        return HttpResponseRedirect('/home/dash/')
+        return HttpResponseRedirect(reverse_lazy('dashboard'))
 
 
-class Login(FormView):
-
+class LoginView(FormView):
     form_class = form.LoginForm
-    template_name = "issue_models/login1.html"
-    def form_valid(self, form):
-        emailaddr = self.request.POST['emailaddr']
-        password = self.request.POST['password']
-        user = authenticate(emailaddr=emailaddr, password=password)
+    template_name = "issue_models/login.html"
 
+    def form_valid(self, form):
+        email = form.cleaned_data['email']
+        password = form.cleaned_data["password"]
+        user = authenticate(email=email, password=password)
         if user is not None:
-            # the password verified for the user
             if user.is_active:
                 login(self.request,user)
                 print("User is valid, active and authenticated")
-                return HttpResponseRedirect('/home/dash/')
+                return HttpResponseRedirect(reverse_lazy('dashboard'))
             else:
                 print("The password is valid, but the account has been disabled!")
                 return HttpResponse("invalid")
         else:
-            # the authentication system was unable to verify the username and password
-            print("The username and password were incorrect.")
-        return HttpResponseRedirect('/home/login1/')
+            print("The username and password were incorrect123.")
+        return HttpResponseRedirect(reverse_lazy('login'))
 
-class logout_view(View):
-    print 'working1'
+
+class LogoutView(View):
     def get(self, request):
-        print 'working2'
         logout(self.request)
-        print 'working3'
         return redirect('/home/login/')
 
-class Dash(ListView):
-    template_name="issue_models/dash.html"
-    model = new_project
+
+class DashBoard(ListView):
+    template_name = "issue_models/dash.html"
+    model = Project
+    paginate_by = 5
+
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(Dash, self).dispatch(request, *args, **kwargs)
+        return super(DashBoard, self).dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
-        context=super(Dash, self).get_context_data(**kwargs)
+        context=super(DashBoard, self).get_context_data(**kwargs)
         context['filter_code']= self.request.GET.get('id')
         return context
+
     def get_queryset(self):
         filter_id=self.request.GET.get('id')
         if filter_id == '1':
-            return new_project.objects.filter(Assigned_to=self.request.user )
+            return Project.objects.filter(Assigned_to=self.request.user)
         if filter_id == '3':
-            return new_project.objects.filter(projectmanager=self.request.user)
+            return Project.objects.filter(projectmanager=self.request.user)
         if filter_id == '2':
-            temp= new_project.objects.exclude(projectmanager=self.request.user)
-            member=temp.filter(Assigned_to=self.request.user)
+            temp = Project.objects.exclude(projectmanager=self.request.user)
+            member = temp.filter(Assigned_to=self.request.user)
             return member
-        return new_project.objects.filter(Assigned_to=self.request.user )
+        return Project.objects.filter(Assigned_to=self.request.user)
+
+
 class ProfileView(TemplateView):
 
     template_name = "issue_models/profile.html"
@@ -102,24 +106,26 @@ class ProfileView(TemplateView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(ProfileView, self).dispatch(request,*args, **kwargs)
+        return super(ProfileView, self).dispatch(request, *args, **kwargs)
+
 
 class ProfileUpdate(UpdateView):
     template_name = "issue_models/profile_update.html"
     model = MyUser
     form_class = form.ProfileUpdateForm
+
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(ProfileUpdate, self).dispatch(request,*args, **kwargs)
-
+        return super(ProfileUpdate, self).dispatch(request, *args, **kwargs)
     success_url = reverse_lazy('profile')
+
     def get_object(self, queryset=None):
         return self.request.user
 
 
 class CreateProject(CreateView):
     template_name = "issue_models/createproject.html"
-    model = new_project
+    model = Project
     form_class = form.CreateProjectForm
     success_url = reverse_lazy('dashboard')
 
@@ -128,43 +134,35 @@ class CreateProject(CreateView):
         kwargs['request'] = self.request
         return kwargs
 
-
-
-
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(CreateProject, self).dispatch(request, *args, **kwargs)
 
 
-
-
-
 class ProjectView(DetailView):
 
     template_name = "issue_models/project.html"
-    model = new_project
+    model = Project
 
     def get_context_data(self, **kwargs):
         context = super(ProjectView, self).get_context_data(**kwargs)
-        story_all = stories.objects.filter(projtitle=self.object.projtitle)
-        story_visible = story_all.filter(visibilty=True).order_by('date')
-        print 'visible : ', story_visible.count()
-        sch_story= story_visible.filter(scheduled='ys')
-        print 'scheduled count : ', sch_story.count()
-        unsch_story=story_visible.filter(scheduled='no')
-        print 'unscheduled count : ', unsch_story.count()
-        unstarted=sch_story.filter(status='unstrtd')
-        print 'unstarted : ', unstarted.count()
-        started=sch_story.exclude(status='unstrtd')
-        print 'started : ', started.count()
-        context['started']=started
-        context['unstarted']=unstarted
+        story_all = Story.objects.filter(project_title=self.object.id)
+        print "number of story_all :"
+        print story_all.count()
+        story_visible = story_all.filter(visibility=True).order_by('date')
+        sch_story = story_visible.filter(scheduled='ys')
+        unsch_story = story_visible.filter(scheduled='no')
+        unstarted = sch_story.filter(status='unstrtd')
+        started = sch_story.exclude(status='unstrtd')
+        context['started'] = started
+        context['unstarted'] = unstarted
         context['unsch_story'] = unsch_story
         return context
 
+
 class ProjectUpdate(UpdateView):
     template_name = "issue_models/updateproject.html"
-    model = new_project
+    model = Project
     form_class = form.CreateProjectForm
 
     def get_form_kwargs(self):
@@ -175,54 +173,56 @@ class ProjectUpdate(UpdateView):
 
 
 class AddStory(CreateView):
-    model = stories
+    model = Story
     form_class = form.AddStoryForm
     template_name = "issue_models/addstory.html"
-    # success_url = reverse_lazy( 'dashboard' )
+
     def get_form_kwargs(self):
         kwargs = super(AddStory, self).get_form_kwargs()
-        kwargs['project'] = new_project.objects.get(pk=self.kwargs['pk'])
+        kwargs['project'] = Project.objects.get(pk=self.kwargs['pk'])
         kwargs['user'] = self.request.user
         return kwargs
+
     def get_success_url(self):
 
-        subject = self.object.storytitle
+        subject = self.object.story_title
         print subject
         message = ' You have been assigned to story'
         from_email = settings.EMAIL_HOST_USER
-        tomail=self.object.assignee.emailaddr
-        print tomail
-        send_mail(subject, message, from_email, [tomail], fail_silently=True)
-        projecttitle = self.object.projtitle
-        print projecttitle
-        return reverse('project', kwargs={'pk': projecttitle})
+        to_mail = self.object.assignee.email
+        print to_mail
+        send_mail(subject, message, from_email, [to_mail], fail_silently=True)
+        project_id = self.kwargs['pk']
+        print project_id
+        return reverse('project', kwargs={'pk': project_id})
+
+
 class StoryView(DetailView):
-    model = stories
+    model = Story
     template_name = "issue_models/viewstory.html"
 
 
-
-
 class UpdateStory(UpdateView):
-    model = stories
-    template_name ="issue_models/addstory.html"
+    model = Story
+    template_name = "issue_models/addstory.html"
     form_class = form.UpdateStoryForm
+
     def get_success_url(self):
-        subject = self.object.storytitle
-        print subject
+        subject = self.object.story_title
         message = ' You have been assigned to story'
         from_email = settings.EMAIL_HOST_USER
-        tomail=self.object.assignee.emailaddr
-        print tomail
-        send_mail(subject, message, from_email, [tomail], fail_silently=True)
-        projecttitle = self.object.projtitle
-        return reverse('project', kwargs={'pk': projecttitle})
+        to_mail = self.object.assignee.email
+        send_mail(subject, message, from_email, [to_mail], fail_silently=True)
+        project_title = self.object.project_title
+        return reverse('project', kwargs={'pk': project_title})
+
 
 class StoryDelete(View):
+
     def dispatch(self, request, *args, **kwargs):
-        id=kwargs.get('pk')
-        story = get_object_or_404(stories, pk=id)
-        story.visibilty = False
+        id = kwargs.get('pk')
+        story = get_object_or_404(Story, pk=id)
+        story.visibility = False
         story.save()
-        projecttitle = story.projtitle
-        return HttpResponseRedirect(reverse_lazy('project',kwargs={'pk':projecttitle}))
+        project_title = story.project_title
+        return HttpResponseRedirect(reverse_lazy('project', kwargs={'pk': project_title}))

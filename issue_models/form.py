@@ -1,9 +1,13 @@
 from django import forms
 from django.core.mail import send_mail
+from django.core.urlresolvers import reverse_lazy
 from django.core.validators import RegexValidator
+from django.http import HttpResponseRedirect
 from Issue_Track import settings
-from issue_models.models import MyUser, new_project, stories
-from django.contrib.auth import authenticate
+from issue_models.models import MyUser, Project, Story
+from django.contrib.auth import authenticate, login
+
+
 class SignupForm(forms.ModelForm):
     password=forms.CharField(label="password",min_length=6, widget=forms.PasswordInput(),
             validators= [RegexValidator(regex ='(?=.*[0-9])(?=.*[!@#$%^&*()-+])', message="enter proper password")])
@@ -11,7 +15,7 @@ class SignupForm(forms.ModelForm):
 
     class Meta:
         model = MyUser
-        fields = ['emailaddr', 'first_name', 'last_name', 'dob', 'photo', 'password']
+        fields = ['email', 'first_name', 'last_name', 'dob', 'photo', 'password']
     error_messages = {
         'password_mismatch':("password mismatch"),
     }
@@ -23,10 +27,6 @@ class SignupForm(forms.ModelForm):
             raise forms.ValidationError(
                 self.error_messages["password_mismatch"],
                 code='password_mismatch')
-
-        # Always return the cleaned data, whether you have changed it or
-        # not.
-
         return confirm_password
 
     def save(self, commit=True):
@@ -37,19 +37,26 @@ class SignupForm(forms.ModelForm):
             return user
 
 class LoginForm(forms.Form):
-    emailaddr= forms.EmailField(label="email address")
+
+    email= forms.EmailField(label="email address")
     password = forms.CharField(label="password", widget=forms.PasswordInput)
     error_messages = {
-        'password_mismatch':("invalid username or password"),
+        'invalid_user':("invalid username or password"),
     }
+
     def clean_password(self):
         password = self.cleaned_data.get("password")
-        emailaddr= self.cleaned_data.get("emailaddr")
-        user = authenticate(emailaddr=emailaddr, password=password)
+        email= self.cleaned_data.get("email")
+        print password
+        print email
+        user = authenticate(email=email, password=password)
+        print user
         if user is None:
             raise forms.ValidationError(
-                self.error_messages["password_mismatch"],
-                code='password_mismatch')
+                self.error_messages["invalid_user"],
+                code='invalid_user')
+        return password
+
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
@@ -60,8 +67,9 @@ class ProfileUpdateForm(forms.ModelForm):
 class CreateProjectForm(forms.ModelForm):
 
     class Meta:
-        model=new_project
-        fields = ['projtitle', 'description', 'Assigned_to']
+        model=Project
+        fields = ['project_title', 'description', 'Assigned_to']
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super(CreateProjectForm, self).__init__(*args, **kwargs)
@@ -72,16 +80,16 @@ class CreateProjectForm(forms.ModelForm):
     def save(self, commit=True):
             print 'abc'
             user1 = super(CreateProjectForm, self).save(commit=False)
-            user1.projectmanager = self.request.user
+            user1.project_manager = self.request.user
             print 'abc1'
             user1.save()
             self.save_m2m();
-            subject = user1.projtitle
+            subject = user1.project_title
             message = ' You have been added in the project'
             from_email = settings.EMAIL_HOST_USER
             for assigned_user in user1.Assigned_to.all():
-                tomail=assigned_user.emailaddr
-                send_mail(subject, message, from_email, [tomail], fail_silently=True)
+                to_mail=assigned_user.email
+                send_mail(subject, message, from_email, [to_mail], fail_silently=True)
             user1.Assigned_to.add(self.request.user)
 
             return user1
@@ -89,31 +97,31 @@ class CreateProjectForm(forms.ModelForm):
 
 
 class ProjectForm(forms.ModelForm):
-    model=new_project
-    fields = fields = ['projtitle', 'description', 'Assigned_to']
+    model=Project
+    fields = fields = ['project_title', 'description', 'Assigned_to']
 
 
 
 class AddStoryForm(forms.ModelForm):
     class Meta:
-        model=stories
-        fields=['storytitle', 'description','assignee', 'estimate','scheduled']
+        model=Story
+        fields=['story_title', 'description','assignee', 'estimate','scheduled']
     def __init__(self, *args, **kwargs):
         self.project_key = kwargs.pop('project')
         self.user=kwargs.pop('user')
         super(AddStoryForm, self).__init__(*args, **kwargs)
     def save(self, commit=True):
-            print 'abc'
+            print 'abcz'
             user1 = super(AddStoryForm, self).save(commit=False)
-            user1.projtitle = self.project_key
-            user1.emailaddr = self.user
-            print 'abc1'
+            user1.project_title = self.project_key
+            user1.email = self.user
+            print 'abc1zz'
             user1.save()
             return user1
 class UpdateStoryForm(forms.ModelForm):
     class Meta:
-        model=stories
-        fields=['storytitle', 'description','assignee', 'estimate','scheduled', 'status']
+        model=Story
+        fields=['story_title', 'description','assignee', 'estimate','scheduled', 'status']
     error_messages = {
         'unscheduled':("This has to be unstarted when it is not scheduled"),
     }
