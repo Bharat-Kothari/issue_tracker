@@ -1,6 +1,10 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
-
+<h2>
+    <a href="{% url 'logout' %}">logout</a>
+    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <a href="{% url 'profile' %}">profile</a>
+<h2>
 <img src="{{MEDIA_URL}}{{object.photo}}" width="80px" height="80px"/>
 <p>
 

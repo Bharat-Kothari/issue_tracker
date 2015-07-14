@@ -1,8 +1,14 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
+<h2><a href="{% url 'logout' %}">logout</a>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'profile' %}">profile</a>
+</h2>
+<h2>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <input type="submit" value="Create" />
     </form>
+</h2>
 {% endblock %}

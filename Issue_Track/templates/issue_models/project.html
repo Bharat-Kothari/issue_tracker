@@ -2,8 +2,6 @@
 {% block content %}
 <h2><a href="{% url 'logout' %}">logout</a>
     <a href="{% url 'dashboard' %}">Dashboard</a>
-
-<a href="{% url 'create' %}">create project</a>
 {% if object.project_manager == user %}
         <a href="{% url 'updateproject' object.id %}">update project</a>
 {% endif %}

@@ -1,6 +1,9 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
-
+<h2><a href="{% url 'logout' %}">logout</a>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'project' project.id %}">project</a>
+<h2>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}

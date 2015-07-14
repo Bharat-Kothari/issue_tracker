@@ -1,8 +1,11 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
-
+<h2><a href="{% url 'logout' %}">logout</a>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'project' object.project_title.id%}">project</a>
+</h2>
 <h2>
-    <p>storytitle : {{object.storytitle}}</p>
+    <p>storytitle : {{object.story_title}}</p>
     <p>description : {{object.description}}</p>
     <p>assignee:{{object.assignee}}</p>
     <p>estimate: {{object.estimate}}</p>

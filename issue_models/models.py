@@ -79,7 +79,7 @@ class Project(models.Model):
     project_manager = models.ForeignKey(MyUser, related_name='Manager')
     project_title = models.CharField(max_length=30)
     description = models.CharField(max_length=500)
-    Assigned_to = models.ManyToManyField(MyUser)
+    assigned_to = models.ManyToManyField(MyUser)
 
     def __unicode__(self):
         return self.project_title
