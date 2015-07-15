@@ -1,13 +1,10 @@
-from django.contrib.auth.models import User, AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
 
 from datetime import datetime
 
-# Create your models here.
-
 
 class MyUserManager(BaseUserManager):
-    # use_in_migrations = True
 
     def _create_user(self, email, password,
                      is_staff, is_superuser, **extra_fields):
@@ -43,8 +40,8 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
         error_messages={
             'unique': ("A email with that already exists."),
         })
-    first_name = models.CharField('first name', max_length=30, blank=True)
-    last_name = models.CharField('last name', max_length=30, blank=True)
+    first_name = models.CharField('first name', max_length=30)
+    last_name = models.CharField('last name', max_length=30)
     dob = models.DateField('date of birth', null=True)
     photo = models.ImageField(blank=True, upload_to='images')
     is_staff = models.BooleanField(('staff status'), default=False,
@@ -63,7 +60,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
         return full_name.strip()
 
     def get_short_name(self):
-        "Returns the short name for the user."
+        # Returns the short name for the user.
         return self.first_name
 
     objects = MyUserManager()
@@ -74,6 +71,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+# Model for project
 class Project(models.Model):
 
     project_manager = models.ForeignKey(MyUser, related_name='Manager')
@@ -85,6 +83,7 @@ class Project(models.Model):
         return self.project_title
 
 
+# model for story of projects
 class Story(models.Model):
 
     project_title = models.ForeignKey(Project)
@@ -96,12 +95,12 @@ class Story(models.Model):
     date = models.DateField(default=datetime.now)
     unstrtd = 'unstrtd'
     strtd = 'strtd'
-    finsh='finish'
+    finish = 'finish'
     deliv = 'deliv'
     status_choice = (
         (unstrtd, 'notstarted'),
         (strtd, 'started'),
-        (finsh, 'finished'),
+        (finish, 'finished'),
         (deliv, 'delivered')
     )
     status = models.CharField(max_length=7, choices=status_choice, default=unstrtd)
@@ -111,7 +110,7 @@ class Story(models.Model):
         (ys, 'yes'),
         (no, 'no')
     )
-    scheduled = models.CharField(max_length=2, choices=scheduled_choice)
+    scheduled = models.CharField(max_length=2, choices=scheduled_choice, default='no')
     visibility = models.BooleanField(default=True)
 
     def __unicode__(self):

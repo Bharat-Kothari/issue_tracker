@@ -9,6 +9,12 @@
         <p>first name :{{myuser.first_name}}</p>
         <p>last name  : {{myuser.last_name}}</p>
         <p>date of birth: {{myuser.dob}}</p>
-        <img src="{{MEDIA_URL}}{{myuser.photo}}" width="80px" height="80px"/>
+        {% if user.photo %}
+            <img src="{{MEDIA_URL}}{{object.photo}}" width="80px" height="80px"/>
+        {% else %}
+            <img src="/media/images/Facebook-Blank-Photo1.jpg" width="80px" height="80px"/>
+        {% endif %}
+
+
         </h2>
 {%endblock%}

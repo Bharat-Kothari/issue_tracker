@@ -1,17 +1,16 @@
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.utils.decorators import method_decorator
 from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView, DetailView, ListView
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
+
 from Issue_Track import settings
 from issue_models.models import MyUser, Project, Story
 from issue_models import form
 
-# to check user is already logged in.
+# To check user is already logged in.
 
 
 def loginCheck(f):
@@ -23,7 +22,7 @@ def loginCheck(f):
             return f(request)
     return check_authentication
 
-# to check user has logged in.
+# To check user has logged in.
 
 
 def logoutCheck(f):
@@ -35,51 +34,73 @@ def logoutCheck(f):
             return redirect(reverse('login'))
     return check_authentication
 
+# To check a login member is member of that project
 def projectMemberCheck(f):
     def check_authentication(request, *args, **kwargs):
-        project = Project.objects.get(id=kwargs['pk'])
-        temp = project.assigned_to.all()
         if request.user.is_authenticated():
-            if temp.filter(email = request.user.email):
-                return f(request,*args, **kwargs)
-            else:
-                raise Http404
-    return check_authentication
-
-def projectUpdateCheck(f):
-    def check_authentication(request, *args, **kwargs):
-        project = Project.objects.get(id=kwargs['pk'])
-        print project
-        if request.user.is_authenticated():
-            if project.project_manager==request.user:
-                return f(request,*args, **kwargs)
-            else:
-                raise Http404
-    return check_authentication
-
-def storyViewCheck(f):
-    def check_authentication(request, *args, **kwargs):
-        story = Story.objects.get(id=kwargs['pk'])
-        print story
-        if story.visibility:
-            project= story.project_title
-            print project
-            temp = project.assigned_to.all()
-            print temp
-            print request.user.email
-            if request.user.is_authenticated():
+            if Project.objects.filter(pk=kwargs['pk']).exists():
+                project = Project.objects.get(id=kwargs['pk'])
+                temp = project.assigned_to.all()
                 if temp.filter(email = request.user.email):
                     return f(request,*args, **kwargs)
                 else:
                     raise Http404
+            else:
+                raise Http404
         else:
-            raise Http404
+            return redirect(reverse('login'))
     return check_authentication
+
+# To check that a project which is being updated,is updated by the Project manager
+
+
+def projectUpdateCheck(f):
+    def check_authentication(request, *args, **kwargs):
+        if request.user.is_authenticated():
+            if Project.objects.filter(pk=kwargs['pk']).exists():
+                project = Project.objects.get(id=kwargs['pk'])
+                if project.project_manager==request.user:
+                    return f(request,*args, **kwargs)
+                else:
+                    raise Http404
+            else:
+                raise Http404
+        else:
+            return redirect(reverse('login'))
+    return check_authentication
+
+# To check a logged in user is  member of that project of which he is viewing the story
+
+
+def storyViewCheck(f):
+    def check_authentication(request, *args, **kwargs):
+        if request.user.is_authenticated():
+            if Story.objects.filter(id=kwargs['pk']).exists():
+                story = Story.objects.get(id=kwargs['pk'])
+                if story.visibility:
+                    project= story.project_title
+                    print project
+                    temp = project.assigned_to.all()
+                    if temp.filter(email = request.user.email):
+                        return f(request, *args, **kwargs)
+                    else:
+                        raise Http404
+                else:
+                    raise Http404
+            else:
+                raise Http404
+        else:
+            return redirect(reverse('login'))
+    return check_authentication
+
+# View for signup
 
 
 class SignupView(CreateView):
     form_class = form.SignupForm
     template_name = 'issue_models/myuser_form.html'
+
+# To login the new user and send the confirmation mail.
 
     def form_valid(self, form):
         email = form.cleaned_data['email']
@@ -96,6 +117,7 @@ class SignupView(CreateView):
         login(self.request, user)
         return HttpResponseRedirect(reverse_lazy('dashboard'))
 
+# View for Login in to the dashboard
 
 class LoginView(FormView):
     form_class = form.LoginForm
@@ -108,14 +130,13 @@ class LoginView(FormView):
         if user is not None:
             if user.is_active:
                 login(self.request, user)
-                print("User is valid, active and authenticated")
                 return HttpResponseRedirect(reverse_lazy('dashboard'))
             else:
-                print("The password is valid, but the account has been disabled!")
                 return HttpResponse("invalid")
-        else:
-            print("The username and password were incorrect123.")
+
         return HttpResponseRedirect(reverse_lazy('login'))
+
+# View for logout
 
 
 class LogoutView(View):
@@ -123,28 +144,34 @@ class LogoutView(View):
         logout(self.request)
         return redirect(reverse('homepage'))
 
+# View of dashboard showing profile page link, Create project and various project in which user in involved.
 
-class DashBoard(ListView):
+
+class DashBoardView(ListView):
     template_name = "issue_models/dash.html"
     model = Project
     paginate_by = 5
 
+    # To send the id in filter_code
     def get_context_data(self, **kwargs):
-        context=super(DashBoard, self).get_context_data(**kwargs)
+        context=super(DashBoardView, self).get_context_data(**kwargs)
         context['filter_code']= self.request.GET.get('id')
         return context
 
+    # To have different queryset for All Member Owner of project.
     def get_queryset(self):
         filter_id=self.request.GET.get('id')
+        project = Project.objects.filter(assigned_to=self.request.user)
         if filter_id == '1':
-            return Project.objects.filter(assigned_to=self.request.user)
+            project = Project.objects.filter(assigned_to=self.request.user)
         if filter_id == '3':
-            return Project.objects.filter(project_manager=self.request.user)
+            project = Project.objects.filter(project_manager=self.request.user)
         if filter_id == '2':
             temp = Project.objects.exclude(project_manager=self.request.user)
-            member = temp.filter(assigned_to=self.request.user)
-            return member
-        return Project.objects.filter(assigned_to=self.request.user)
+            project = temp.filter(assigned_to=self.request.user)
+        return project
+
+# To show the profile info. and profile update
 
 
 class ProfileView(TemplateView):
@@ -156,40 +183,32 @@ class ProfileView(TemplateView):
         context['myuser'] = self.request.user
         return context
 
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProfileView, self).dispatch(request, *args, **kwargs)
+# View to update Profile
 
 
-class ProfileUpdate(UpdateView):
+class ProfileUpdateView(UpdateView):
     template_name = "issue_models/profile_update.html"
     model = MyUser
     form_class = form.ProfileUpdateForm
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ProfileUpdate, self).dispatch(request, *args, **kwargs)
     success_url = reverse_lazy('profile')
 
     def get_object(self, queryset=None):
         return self.request.user
 
-
-class CreateProject(CreateView):
+# View to Create Project
+class CreateProjectView(CreateView):
     template_name = "issue_models/createproject.html"
     form_class = form.CreateProjectForm
     success_url = reverse_lazy('dashboard')
 
+    # To send request to the form
     def get_form_kwargs(self):
-        kwargs = super(CreateProject, self).get_form_kwargs()
+        kwargs = super(CreateProjectView, self).get_form_kwargs()
         kwargs['request'] = self.request
         return kwargs
 
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(CreateProject, self).dispatch(request, *args, **kwargs)
 
-
+# View To see project details and story of a project
 class ProjectView(DetailView):
 
     template_name = "issue_models/project.html"
@@ -211,36 +230,39 @@ class ProjectView(DetailView):
         return context
 
 
-class ProjectUpdate(UpdateView):
+# View To update the project
+class ProjectUpdateView(UpdateView):
     template_name = "issue_models/updateproject.html"
     model = Project
     form_class = form.UpdateProjectForm
+    success_url = reverse_lazy('dashboard')
 
     def get_form_kwargs(self):
-        kwargs = super(ProjectUpdate, self).get_form_kwargs()
+        kwargs = super(ProjectUpdateView, self).get_form_kwargs()
         kwargs['request'] = self.request
         kwargs['id'] = self.kwargs['pk']
         return kwargs
-    success_url = reverse_lazy('dashboard')
 
     def get_context_data(self, **kwargs):
-        context=super(ProjectUpdate, self).get_context_data(**kwargs)
+        context=super(ProjectUpdateView, self).get_context_data(**kwargs)
         context['project'] = Project.objects.get(pk=self.kwargs['pk'])
         return context
 
-class AddStory(CreateView):
+
+# View to add story to the project
+class AddStoryView(CreateView):
     model = Story
     form_class = form.AddStoryForm
     template_name = "issue_models/addstory.html"
 
     def get_form_kwargs(self):
-        kwargs = super(AddStory, self).get_form_kwargs()
+        kwargs = super(AddStoryView, self).get_form_kwargs()
         kwargs['id'] = self.kwargs['pk']
         kwargs['user'] = self.request.user
         return kwargs
 
     def get_context_data(self, **kwargs):
-        context=super(AddStory, self).get_context_data(**kwargs)
+        context=super(AddStoryView, self).get_context_data(**kwargs)
         context['project'] = Project.objects.get(pk=self.kwargs['pk'])
         return context
 
@@ -251,7 +273,7 @@ class AddStory(CreateView):
         assignee = form.cleaned_data['assignee']
         to_mail = assignee.email
         send_mail(subject, message, from_email, [to_mail], fail_silently=True)
-        return super(AddStory,self).form_valid(form)
+        return super(AddStoryView,self).form_valid(form)
 
     def get_success_url(self):
         project_id = self.kwargs['pk']
@@ -259,18 +281,20 @@ class AddStory(CreateView):
         return reverse('project', kwargs={'pk': project_id})
 
 
+# View to show story
 class StoryView(DetailView):
     model = Story
     template_name = "issue_models/viewstory.html"
 
 
-class UpdateStory(UpdateView):
+# view to update the story
+class UpdateStoryView(UpdateView):
     model = Story
     template_name = "issue_models/story_update.html"
     form_class = form.UpdateStoryForm
 
     def get_form_kwargs(self):
-        kwargs = super(UpdateStory, self).get_form_kwargs()
+        kwargs = super(UpdateStoryView, self).get_form_kwargs()
         kwargs['id'] = self.kwargs['pk']
         return kwargs
 
@@ -285,7 +309,7 @@ class UpdateStory(UpdateView):
             to_mail = self.object.assignee.email
             print to_mail
             send_mail(subject, message, from_email, [to_mail], fail_silently=True)
-        return super(UpdateStory, self).form_valid(form)
+        return super(UpdateStoryView, self).form_valid(form)
 
     def get_success_url(self):
         project_id = self.get_object().project_title.id
@@ -293,7 +317,8 @@ class UpdateStory(UpdateView):
         return reverse('project', kwargs={'pk': project_id})
 
 
-class StoryDelete(View):
+# view to softly delete a story
+class StoryDeleteView(View):
 
     def dispatch(self, request, *args, **kwargs):
         id = kwargs.get('pk')
