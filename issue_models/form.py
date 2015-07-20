@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.forms import PasswordChangeForm
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.contrib.auth import authenticate
@@ -51,10 +52,7 @@ class LoginForm(forms.Form):
     def clean_password(self):
         password = self.cleaned_data.get("password")
         email = self.cleaned_data.get("email")
-        print password
-        print email
         user = authenticate(email=email, password=password)
-        print user
         if user is None:
             raise forms.ValidationError(
                 self.error_messages["invalid_user"],
@@ -96,7 +94,6 @@ class CreateProjectForm(forms.ModelForm):
             for assigned_user in user1.assigned_to.all():
                 to_mail = assigned_user.email
                 send_mail(subject, message, from_email, [to_mail], fail_silently=True)
-            print '3'
             user1.assigned_to.add(self.request.user)
 
             return user1
@@ -128,7 +125,6 @@ class UpdateProjectForm(forms.ModelForm):
             from_email = settings.EMAIL_HOST_USER
             new= newlist.exclude(pk__in=oldlist)
             for assigned_user in new:
-                    print '1'
                     to_mail = assigned_user.email
                     send_mail(subject, message, from_email, [to_mail], fail_silently=True)
 
@@ -209,3 +205,9 @@ class UpdateStoryForm(forms.ModelForm):
             self.error_messages["unscheduled"],
             code='unscheduled')
         return status
+
+class ChangePasswordForm(PasswordChangeForm):
+    new_password1 = forms.CharField(label=("New password"),
+                                    widget=forms.PasswordInput, min_length=6,validators=[RegexValidator(regex ='(?=.*[0-9])(?=.*[!@#$%^&*()-+])', message="enter proper password")])
+    new_password2 = forms.CharField(label=("New password confirmation"),
+                                    widget=forms.PasswordInput, min_length=6,validators=[RegexValidator(regex ='(?=.*[0-9])(?=.*[!@#$%^&*()-+])', message="enter proper password")])

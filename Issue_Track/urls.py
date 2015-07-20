@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.conf.urls import patterns, include, url
+from django.views.generic.base import TemplateView
 from django.views.static import serve
 from Issue_Track import settings
 import issue_models
@@ -12,6 +13,7 @@ import issue_models
 urlpatterns = patterns('',
 
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^$', TemplateView.as_view(template_name="issue_models/home.html"), name='homepage'),
     url(r'^home/', include('issue_models.urls')),
     url(r'^media/(?P<path>.*)$', serve, {'document_root': getattr(settings, "MEDIA_ROOT"),}),
 

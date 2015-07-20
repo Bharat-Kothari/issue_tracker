@@ -5,12 +5,12 @@
     <h2><a href="{% url 'logout' %}">logout</a>
         <a href="{% url 'dashboard' %}">Dashboard</a>
         <a href=" {%url 'update_profile' %}"> update profile </a></h2>
-    <h2>   Emailaddress :{{ myuser.email}}
-        <p>first name :{{myuser.first_name}}</p>
-        <p>last name  : {{myuser.last_name}}</p>
-        <p>date of birth: {{myuser.dob}}</p>
+    <h2>   Emailaddress :{{ user.email}}
+        <p>first name :{{user.first_name}}</p>
+        <p>last name  : {{user.last_name}}</p>
+        <p>date of birth: {{user.dob}}</p>
         {% if user.photo %}
-            <img src="{{MEDIA_URL}}{{object.photo}}" width="80px" height="80px"/>
+            <img src="{{MEDIA_URL}}{{myuser.photo}}" width="80px" height="80px"/>
         {% else %}
             <img src="/media/images/Facebook-Blank-Photo1.jpg" width="80px" height="80px"/>
         {% endif %}

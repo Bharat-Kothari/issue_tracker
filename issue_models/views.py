@@ -1,3 +1,5 @@
+import json
+
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView, DetailView, ListView
@@ -35,14 +37,16 @@ def logoutCheck(f):
     return check_authentication
 
 # To check a login member is member of that project
+
+
 def projectMemberCheck(f):
     def check_authentication(request, *args, **kwargs):
         if request.user.is_authenticated():
             if Project.objects.filter(pk=kwargs['pk']).exists():
                 project = Project.objects.get(id=kwargs['pk'])
                 temp = project.assigned_to.all()
-                if temp.filter(email = request.user.email):
-                    return f(request,*args, **kwargs)
+                if temp.filter(email=request.user.email):
+                    return f(request, *args, **kwargs)
                 else:
                     raise Http404
             else:
@@ -60,7 +64,7 @@ def projectUpdateCheck(f):
             if Project.objects.filter(pk=kwargs['pk']).exists():
                 project = Project.objects.get(id=kwargs['pk'])
                 if project.project_manager==request.user:
-                    return f(request,*args, **kwargs)
+                    return f(request, *args, **kwargs)
                 else:
                     raise Http404
             else:
@@ -78,10 +82,9 @@ def storyViewCheck(f):
             if Story.objects.filter(id=kwargs['pk']).exists():
                 story = Story.objects.get(id=kwargs['pk'])
                 if story.visibility:
-                    project= story.project_title
-                    print project
+                    project = story.project_title
                     temp = project.assigned_to.all()
-                    if temp.filter(email = request.user.email):
+                    if temp.filter(email=request.user.email):
                         return f(request, *args, **kwargs)
                     else:
                         raise Http404
@@ -105,7 +108,6 @@ class SignupView(CreateView):
     def form_valid(self, form):
         email = form.cleaned_data['email']
         password = form.cleaned_data['password']
-        print password
         form.save()
         subject = 'Successful registration'
         message = ' You have been successfully registered in issue tracker'
@@ -113,11 +115,11 @@ class SignupView(CreateView):
         to_mail = email
         send_mail(subject, message, from_email, [to_mail], fail_silently=True)
         user = authenticate(email=email, password=password)
-        print user
         login(self.request, user)
         return HttpResponseRedirect(reverse_lazy('dashboard'))
 
 # View for Login in to the dashboard
+
 
 class LoginView(FormView):
     form_class = form.LoginForm
@@ -130,11 +132,9 @@ class LoginView(FormView):
         if user is not None:
             if user.is_active:
                 login(self.request, user)
-                return HttpResponseRedirect(reverse_lazy('dashboard'))
-            else:
-                return HttpResponse("invalid")
+                return HttpResponseRedirect(reverse('dashboard'))
 
-        return HttpResponseRedirect(reverse_lazy('login'))
+        return HttpResponseRedirect(reverse('login'))
 
 # View for logout
 
@@ -154,8 +154,8 @@ class DashBoardView(ListView):
 
     # To send the id in filter_code
     def get_context_data(self, **kwargs):
-        context=super(DashBoardView, self).get_context_data(**kwargs)
-        context['filter_code']= self.request.GET.get('id')
+        context = super(DashBoardView, self).get_context_data(**kwargs)
+        context['filter_code'] = self.request.GET.get('id')
         return context
 
     # To have different queryset for All Member Owner of project.
@@ -178,10 +178,6 @@ class ProfileView(TemplateView):
 
     template_name = "issue_models/profile.html"
 
-    def get_context_data(self, **kwargs):
-        context = super(ProfileView, self).get_context_data(**kwargs)
-        context['myuser'] = self.request.user
-        return context
 
 # View to update Profile
 
@@ -190,10 +186,48 @@ class ProfileUpdateView(UpdateView):
     template_name = "issue_models/profile_update.html"
     model = MyUser
     form_class = form.ProfileUpdateForm
+    second_form_class = form.PasswordChangeForm
     success_url = reverse_lazy('profile')
+
+    def get_context_data(self, **kwargs):
+        context = super(ProfileUpdateView, self).get_context_data(**kwargs)
+        if 'form' not in context:
+            context['form'] = self.form_class()
+        if 'form2' not in context:
+            context['form2'] = self.second_form_class(user=self.request.user)
+        return context
 
     def get_object(self, queryset=None):
         return self.request.user
+
+    def form_invalid(self, **kwargs):
+        context = {
+                    'form' :  self.form_class(),
+                    'form2': self.second_form_class(user=self.request.user),
+                  }
+        form = self.get_form()
+        if form is self.form_class:
+            context['form'] = self.get_form()
+        else:
+            context['form2'] = self.get_form()
+
+        return self.render_to_response(self.get_context_data(**kwargs))
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if 'form' in request.POST:
+            form_class = self.get_form_class()
+            form_name = 'form'
+        else:
+            form_class = self.second_form_class
+            form_name = 'form2'
+
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(**{form_name: form})
+
 
 # View to Create Project
 class CreateProjectView(CreateView):
@@ -217,8 +251,6 @@ class ProjectView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(ProjectView, self).get_context_data(**kwargs)
         story_all = Story.objects.filter(project_title=self.object.id)
-        print "number of story_all :"
-        print story_all.count()
         story_visible = story_all.filter(visibility=True).order_by('date')
         sch_story = story_visible.filter(scheduled='ys')
         unsch_story = story_visible.filter(scheduled='no')
@@ -234,6 +266,7 @@ class ProjectView(DetailView):
 class ProjectUpdateView(UpdateView):
     template_name = "issue_models/updateproject.html"
     model = Project
+    context_object_name = 'project'
     form_class = form.UpdateProjectForm
     success_url = reverse_lazy('dashboard')
 
@@ -242,11 +275,6 @@ class ProjectUpdateView(UpdateView):
         kwargs['request'] = self.request
         kwargs['id'] = self.kwargs['pk']
         return kwargs
-
-    def get_context_data(self, **kwargs):
-        context=super(ProjectUpdateView, self).get_context_data(**kwargs)
-        context['project'] = Project.objects.get(pk=self.kwargs['pk'])
-        return context
 
 
 # View to add story to the project
@@ -262,7 +290,7 @@ class AddStoryView(CreateView):
         return kwargs
 
     def get_context_data(self, **kwargs):
-        context=super(AddStoryView, self).get_context_data(**kwargs)
+        context = super(AddStoryView, self).get_context_data(**kwargs)
         context['project'] = Project.objects.get(pk=self.kwargs['pk'])
         return context
 
@@ -277,7 +305,6 @@ class AddStoryView(CreateView):
 
     def get_success_url(self):
         project_id = self.kwargs['pk']
-        print project_id
         return reverse('project', kwargs={'pk': project_id})
 
 
@@ -301,19 +328,16 @@ class UpdateStoryView(UpdateView):
     def form_valid(self, form):
         assigned = form.cleaned_data['assignee']
         result = Story.objects.filter(assignee=assigned).exists()
-        if result == False:
+        if result==False:
             subject = self.object.story_title
-            print subject
             message = ' You have been assigned to story'
             from_email = settings.EMAIL_HOST_USER
             to_mail = self.object.assignee.email
-            print to_mail
             send_mail(subject, message, from_email, [to_mail], fail_silently=True)
         return super(UpdateStoryView, self).form_valid(form)
 
     def get_success_url(self):
         project_id = self.get_object().project_title.id
-        print project_id
         return reverse('project', kwargs={'pk': project_id})
 
 
@@ -327,3 +351,18 @@ class StoryDeleteView(View):
         story.save()
         project_id = story.project_title.id
         return HttpResponseRedirect(reverse_lazy('project', kwargs={'pk': project_id}))
+
+
+class SearchStoryView(View):
+
+    template_name = "issue_models/story_search.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        search_text = self.request.GET.get('search_text')
+        if search_text is not None:
+            stories = Story.objects.filter(story_title__icontains=search_text)
+            response = dict()
+            response = [{'story_title': story.story_title} for story in stories]
+            return HttpResponse(json.dumps(response), content_type="application/json")
+        else:
+            return super(SearchStoryView, self).dispatch(request, *args, **kwargs)

@@ -1,23 +1,28 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
-<h2>
-    <a href="{% url 'logout' %}">logout</a>
-    <a href="{% url 'dashboard' %}">Dashboard</a>
-    <a href="{% url 'profile' %}">profile</a>
-<h2>
-    {% if user.photo %}
-        <img src="{{MEDIA_URL}}{{object.photo}}" width="80px" height="80px"/>
-    {% else %}
-        <img src="/media/images/Facebook-Blank-Photo1.jpg" width="80px" height="80px"/>
-    {% endif %}
+    <h2>
+        <a href="{% url 'logout' %}">logout</a>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'profile' %}">profile</a>
+    <h2>
+        {% if user.photo %}
+            <img src="{{MEDIA_URL}}{{object.photo}}" width="80px" height="80px"/>
+        {% else %}
+            <img src="/media/images/Facebook-Blank-Photo1.jpg" width="80px" height="80px"/>
+        {% endif %}
 
-<p>
+    </h2>
+    <form action="" method="post" enctype="multipart/form-data">{% csrf_token %}
+        Emailaddress : <input type="text" value="{{user.email}}" disabled>
 
-</p>
-<form action="" method="post" enctype="multipart/form-data">{% csrf_token %}
-    Emailaddress : <input type="text" value="{{user.email}}" disabled>
-    {{ form.as_p }}
+        {{ form.as_p }}
 
-    <input type="submit" value="Update" />
-</form>
+        <input type="submit" value="Update" />
+    </form>
+
+    <form method="post">
+        {% csrf_token %}
+            {{ form2.as_p }}
+        <input type="submit" name="form2" value="change password" />
+    </form>
 {%endblock%}
