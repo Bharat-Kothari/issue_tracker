@@ -16,25 +16,27 @@ from issue_models import form
 
 
 def loginCheck(f):
-
     def check_authentication(request, *args):
         if request.user.is_authenticated():
             return redirect(reverse_lazy('dashboard'))
         else:
             return f(request)
+
     return check_authentication
+
 
 # To check user has logged in.
 
 
 def logoutCheck(f):
-
     def check_authentication(request, *args, **kwargs):
         if request.user.is_authenticated():
-            return f(request,*args, **kwargs)
+            return f(request, *args, **kwargs)
         else:
             return redirect(reverse('login'))
+
     return check_authentication
+
 
 # To check a login member is member of that project
 
@@ -53,7 +55,9 @@ def projectMemberCheck(f):
                 raise Http404
         else:
             return redirect(reverse('login'))
+
     return check_authentication
+
 
 # To check that a project which is being updated,is updated by the Project manager
 
@@ -63,7 +67,7 @@ def projectUpdateCheck(f):
         if request.user.is_authenticated():
             if Project.objects.filter(pk=kwargs['pk']).exists():
                 project = Project.objects.get(id=kwargs['pk'])
-                if project.project_manager==request.user:
+                if project.project_manager == request.user:
                     return f(request, *args, **kwargs)
                 else:
                     raise Http404
@@ -71,7 +75,9 @@ def projectUpdateCheck(f):
                 raise Http404
         else:
             return redirect(reverse('login'))
+
     return check_authentication
+
 
 # To check a logged in user is  member of that project of which he is viewing the story
 
@@ -94,7 +100,9 @@ def storyViewCheck(f):
                 raise Http404
         else:
             return redirect(reverse('login'))
+
     return check_authentication
+
 
 # View for signup
 
@@ -103,7 +111,7 @@ class SignupView(CreateView):
     form_class = form.SignupForm
     template_name = 'issue_models/myuser_form.html'
 
-# To login the new user and send the confirmation mail.
+    # To login the new user and send the confirmation mail.
 
     def form_valid(self, form):
         email = form.cleaned_data['email']
@@ -117,6 +125,7 @@ class SignupView(CreateView):
         user = authenticate(email=email, password=password)
         login(self.request, user)
         return HttpResponseRedirect(reverse_lazy('dashboard'))
+
 
 # View for Login in to the dashboard
 
@@ -136,6 +145,7 @@ class LoginView(FormView):
 
         return HttpResponseRedirect(reverse('login'))
 
+
 # View for logout
 
 
@@ -143,6 +153,7 @@ class LogoutView(View):
     def get(self, request):
         logout(self.request)
         return redirect(reverse('homepage'))
+
 
 # View of dashboard showing profile page link, Create project and various project in which user in involved.
 
@@ -160,7 +171,7 @@ class DashBoardView(ListView):
 
     # To have different queryset for All Member Owner of project.
     def get_queryset(self):
-        filter_id=self.request.GET.get('id')
+        filter_id = self.request.GET.get('id')
         project = Project.objects.filter(assigned_to=self.request.user)
         if filter_id == '1':
             project = Project.objects.filter(assigned_to=self.request.user)
@@ -171,11 +182,11 @@ class DashBoardView(ListView):
             project = temp.filter(assigned_to=self.request.user)
         return project
 
+
 # To show the profile info. and profile update
 
 
 class ProfileView(TemplateView):
-
     template_name = "issue_models/profile.html"
 
 
@@ -202,9 +213,9 @@ class ProfileUpdateView(UpdateView):
 
     def form_invalid(self, **kwargs):
         context = {
-                    'form' :  self.form_class(),
-                    'form2': self.second_form_class(user=self.request.user),
-                  }
+            'form': self.form_class(),
+            'form2': self.second_form_class(user=self.request.user),
+        }
         form = self.get_form()
         if form is self.form_class:
             context['form'] = self.get_form()
@@ -244,7 +255,6 @@ class CreateProjectView(CreateView):
 
 # View To see project details and story of a project
 class ProjectView(DetailView):
-
     template_name = "issue_models/project.html"
     model = Project
 
@@ -268,7 +278,10 @@ class ProjectUpdateView(UpdateView):
     model = Project
     context_object_name = 'project'
     form_class = form.UpdateProjectForm
-    success_url = reverse_lazy('dashboard')
+
+    def get_success_url(self):
+        project_id = self.kwargs['pk']
+        return reverse_lazy('project', kwargs={'pk': project_id})
 
     def get_form_kwargs(self):
         kwargs = super(ProjectUpdateView, self).get_form_kwargs()
@@ -301,7 +314,7 @@ class AddStoryView(CreateView):
         assignee = form.cleaned_data['assignee']
         to_mail = assignee.email
         send_mail(subject, message, from_email, [to_mail], fail_silently=True)
-        return super(AddStoryView,self).form_valid(form)
+        return super(AddStoryView, self).form_valid(form)
 
     def get_success_url(self):
         project_id = self.kwargs['pk']
@@ -328,7 +341,7 @@ class UpdateStoryView(UpdateView):
     def form_valid(self, form):
         assigned = form.cleaned_data['assignee']
         result = Story.objects.filter(assignee=assigned).exists()
-        if result==False:
+        if result == False:
             subject = self.object.story_title
             message = ' You have been assigned to story'
             from_email = settings.EMAIL_HOST_USER
@@ -343,7 +356,6 @@ class UpdateStoryView(UpdateView):
 
 # view to softly delete a story
 class StoryDeleteView(View):
-
     def dispatch(self, request, *args, **kwargs):
         id = kwargs.get('pk')
         story = get_object_or_404(Story, pk=id)
@@ -354,14 +366,13 @@ class StoryDeleteView(View):
 
 
 class SearchStoryView(View):
-
     template_name = "issue_models/story_search.html"
 
     def dispatch(self, request, *args, **kwargs):
         search_text = self.request.GET.get('search_text')
         if search_text is not None:
             stories = Story.objects.filter(story_title__icontains=search_text)
-            response = dict()
+            # response = dict()
             response = [{'story_title': story.story_title} for story in stories]
             return HttpResponse(json.dumps(response), content_type="application/json")
         else:
