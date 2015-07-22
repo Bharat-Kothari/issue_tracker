@@ -10,7 +10,7 @@
         <p>last name  : {{user.last_name}}</p>
         <p>date of birth: {{user.dob}}</p>
         {% if user.photo %}
-            <img src="{{MEDIA_URL}}{{myuser.photo}}" width="80px" height="80px"/>
+            <img src="{{MEDIA_URL}}{{user.photo}}" width="80px" height="80px"/>
         {% else %}
             <img src="/media/images/Facebook-Blank-Photo1.jpg" width="80px" height="80px"/>
         {% endif %}

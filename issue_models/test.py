@@ -239,18 +239,16 @@ class AddStoryTest(TestCase):
                                      'assignee': self.member.id,
                                      'estimate': 1,
                                      'scheduled': 'no'})
-        self.assertRedirects(response,(reverse('project', kwargs={'pk': self.project.id})))
+        self.assertRedirects(response, (reverse('project', kwargs={'pk': self.project.id})))
 
     def test_authenticated_user_add_story_missing_value(self):
         self.client.login(email=self.instance.email, password=self.password)
         response = self.client.post(reverse('addstory', kwargs={'pk': self.project.id}),
-                                    {
-                                     'description': 'About Story',
+                                    {'description': 'About Story',
                                      'assignee': self.member.id,
                                      'estimate': 1,
                                      'scheduled': 'no'})
         self.assertEqual(response.status_code, 200)
-
 
 
 class UpdateStoryTest(TestCase):
@@ -262,7 +260,7 @@ class UpdateStoryTest(TestCase):
         self.instance.save()
         self.project = G(Project, project_manager=self.instance, assigned_to=[self.member, self.instance])
         self.project2 = G(Project)
-        self.story = G(Story, project_title=self.project,email=self.instance)
+        self.story = G(Story, project_title=self.project, email=self.instance)
         return self.instance
 
     def test_unauthenticated_user(self):
@@ -288,13 +286,12 @@ class UpdateStoryTest(TestCase):
                                      'estimate': 1,
                                      'scheduled': 'no',
                                      'status': 'unstrtd'})
-        self.assertRedirects(response,(reverse('project', kwargs={'pk': self.project.id})))
+        self.assertRedirects(response, (reverse('project', kwargs={'pk': self.project.id})))
 
     def test_authenticated_user_update_story_missing_value(self):
         self.client.login(email=self.instance.email, password=self.password)
         response = self.client.post(reverse('updatestory', kwargs={'pk': self.story.id}),
-                                    {
-                                     'description': 'About Story',
+                                    {'description': 'About Story',
                                      'assignee': self.member.id,
                                      'estimate': 1,
                                      'scheduled': 'no'})
@@ -309,4 +306,4 @@ class UpdateStoryTest(TestCase):
                                      'estimate': 1,
                                      'scheduled': 'no',
                                      'status': 'finish'})
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code, 200)

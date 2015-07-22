@@ -5,7 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView, DetailView, ListView
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.core.mail import send_mail
 
 from Issue_Track import settings
@@ -193,51 +193,41 @@ class ProfileView(TemplateView):
 # View to update Profile
 
 
-class ProfileUpdateView(UpdateView):
+class ProfileUpdateView(FormView):
     template_name = "issue_models/profile_update.html"
     model = MyUser
     form_class = form.ProfileUpdateForm
-    second_form_class = form.PasswordChangeForm
+    second_form_class = form.ChangePasswordForm
     success_url = reverse_lazy('profile')
+
+    def get_form_class(self):
+        if "form2" in self.request.POST:
+            return self.second_form_class
+        else:
+            return self.form_class
+
+    def get_form(self, form_class=None):
+        form_class = self.get_form_class()
+        if "form2" in self.request.POST:
+            form_class=self.second_form_class(user=self.request.user, **self.get_form_kwargs())
+        else:
+            form_class = form.ProfileUpdateForm(instance=self.request.user, **self.get_form_kwargs())
+        return form_class
 
     def get_context_data(self, **kwargs):
         context = super(ProfileUpdateView, self).get_context_data(**kwargs)
-        if 'form' not in context:
-            context['form'] = self.form_class()
-        if 'form2' not in context:
-            context['form2'] = self.second_form_class(user=self.request.user)
+        context['form2'] = self.second_form_class(user=self.request.user)
+        print'here'
+        print self.request.POST
+        if "form2" in self.request.POST:
+            context['form2'] = context['form']
+            context['form'] = form.ProfileUpdateForm(instance=self.request.user)
+        context['user'] = self.request.user
         return context
 
-    def get_object(self, queryset=None):
-        return self.request.user
-
-    def form_invalid(self, **kwargs):
-        context = {
-            'form': self.form_class(),
-            'form2': self.second_form_class(user=self.request.user),
-        }
-        form = self.get_form()
-        if form is self.form_class:
-            context['form'] = self.get_form()
-        else:
-            context['form2'] = self.get_form()
-
-        return self.render_to_response(self.get_context_data(**kwargs))
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if 'form' in request.POST:
-            form_class = self.get_form_class()
-            form_name = 'form'
-        else:
-            form_class = self.second_form_class
-            form_name = 'form2'
-
-        form = self.get_form()
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(**{form_name: form})
+    def form_valid(self, form):
+        form.save()
+        return super(ProfileUpdateView,self).form_valid(form)
 
 
 # View to Create Project
@@ -372,7 +362,6 @@ class SearchStoryView(View):
         search_text = self.request.GET.get('search_text')
         if search_text is not None:
             stories = Story.objects.filter(story_title__icontains=search_text)
-            # response = dict()
             response = [{'story_title': story.story_title} for story in stories]
             return HttpResponse(json.dumps(response), content_type="application/json")
         else:
