@@ -12,9 +12,10 @@
 <h3>
     Search
     <form method="get">
+        <input type="hidden" id="project_id" value={{object.id}}>
         <input type="text" id="search" name="search" />
         <input type="submit" value="search" id="search-button" />
-
+        <input type="submit" value="clear" id="clear-button"/>
     </form>
     <ul id="search-results">
 

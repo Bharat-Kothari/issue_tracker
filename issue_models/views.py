@@ -7,11 +7,12 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.shortcuts import redirect, get_object_or_404, render
 from django.core.mail import send_mail
+import operator
 
 from Issue_Track import settings
 from issue_models.models import MyUser, Project, Story
 from issue_models import form
-
+from django.db.models import Q
 # To check user is already logged in.
 
 
@@ -360,8 +361,19 @@ class SearchStoryView(View):
 
     def dispatch(self, request, *args, **kwargs):
         search_text = self.request.GET.get('search_text')
+        output = []
+        items = search_text.split(',')
+        print items
+        project_id = self.kwargs['pk']
         if search_text is not None:
-            stories = Story.objects.filter(story_title__icontains=search_text)
+            print search_text
+            story = Story.objects.filter(reduce(operator.or_, (Q(story_title__icontains=item) for item in items)))
+            print 'here1'
+            print story
+            storie = story.filter(project_title_id = project_id)
+            stories = storie.filter(visibility = 'ys')
+            print 'here'
+            print stories
             response = [{'story_title': story.story_title} for story in stories]
             return HttpResponse(json.dumps(response), content_type="application/json")
         else:
