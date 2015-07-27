@@ -1,9 +1,15 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
-
-<form enctype="multipart/form-data" action="{% url 'signup' %}" method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Create" />
-</form>
+<div class="signup">
+    <div class="login_signup_bar">
+        Signup
+    </div>
+    <p>
+        <form enctype="multipart/form-data" action="{% url 'signup' %}" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Create" />
+        </form>
+    </p>
+</div>
 {% endblock%}

@@ -1,22 +1,26 @@
+from itertools import izip
 import json
+import operator
 
 from django.core.urlresolvers import reverse_lazy, reverse
+from django.forms import modelformset_factory, formset_factory
 from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.template.loader import render_to_string
 from django.views.generic import View, CreateView, FormView, TemplateView, UpdateView, DetailView, ListView
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
-from django.shortcuts import redirect, get_object_or_404, render
+from django.shortcuts import redirect, get_object_or_404
 from django.core.mail import send_mail
-import operator
+from django.db.models import Q, Sum
 
 from Issue_Track import settings
+from issue_models.form import AddStoryFormSet, AddStoryForm
 from issue_models.models import MyUser, Project, Story
 from issue_models import form
-from django.db.models import Q
 # To check user is already logged in.
 
 
-def loginCheck(f):
+def login_check(f):
     def check_authentication(request, *args):
         if request.user.is_authenticated():
             return redirect(reverse_lazy('dashboard'))
@@ -29,7 +33,7 @@ def loginCheck(f):
 # To check user has logged in.
 
 
-def logoutCheck(f):
+def logout_check(f):
     def check_authentication(request, *args, **kwargs):
         if request.user.is_authenticated():
             return f(request, *args, **kwargs)
@@ -42,7 +46,7 @@ def logoutCheck(f):
 # To check a login member is member of that project
 
 
-def projectMemberCheck(f):
+def project_member_check(f):
     def check_authentication(request, *args, **kwargs):
         if request.user.is_authenticated():
             if Project.objects.filter(pk=kwargs['pk']).exists():
@@ -63,7 +67,7 @@ def projectMemberCheck(f):
 # To check that a project which is being updated,is updated by the Project manager
 
 
-def projectUpdateCheck(f):
+def project_update_check(f):
     def check_authentication(request, *args, **kwargs):
         if request.user.is_authenticated():
             if Project.objects.filter(pk=kwargs['pk']).exists():
@@ -83,7 +87,7 @@ def projectUpdateCheck(f):
 # To check a logged in user is  member of that project of which he is viewing the story
 
 
-def storyViewCheck(f):
+def story_view_check(f):
     def check_authentication(request, *args, **kwargs):
         if request.user.is_authenticated():
             if Story.objects.filter(id=kwargs['pk']).exists():
@@ -218,8 +222,6 @@ class ProfileUpdateView(FormView):
     def get_context_data(self, **kwargs):
         context = super(ProfileUpdateView, self).get_context_data(**kwargs)
         context['form2'] = self.second_form_class(user=self.request.user)
-        print'here'
-        print self.request.POST
         if "form2" in self.request.POST:
             context['form2'] = context['form']
             context['form'] = form.ProfileUpdateForm(instance=self.request.user)
@@ -282,29 +284,27 @@ class ProjectUpdateView(UpdateView):
 
 
 # View to add story to the project
-class AddStoryView(CreateView):
-    model = Story
-    form_class = form.AddStoryForm
+class AddStoryView(FormView):
+
+    form_class = formset_factory(AddStoryForm, formset=AddStoryFormSet, extra=0,min_num=1)
     template_name = "issue_models/addstory.html"
 
     def get_form_kwargs(self):
         kwargs = super(AddStoryView, self).get_form_kwargs()
         kwargs['id'] = self.kwargs['pk']
-        kwargs['user'] = self.request.user
         return kwargs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self,  **kwargs):
         context = super(AddStoryView, self).get_context_data(**kwargs)
         context['project'] = Project.objects.get(pk=self.kwargs['pk'])
         return context
 
     def form_valid(self, form):
-        subject = form.cleaned_data['story_title']
-        message = ' You have been assigned to story'
-        from_email = settings.EMAIL_HOST_USER
-        assignee = form.cleaned_data['assignee']
-        to_mail = assignee.email
-        send_mail(subject, message, from_email, [to_mail], fail_silently=True)
+        for f in form:
+            obj = f.save(commit=False)
+            obj.project_title = Project.objects.get(id=self.kwargs['pk'])
+            obj.email = self.request.user
+            obj.save()
         return super(AddStoryView, self).form_valid(form)
 
     def get_success_url(self):
@@ -363,18 +363,72 @@ class SearchStoryView(View):
         search_text = self.request.GET.get('search_text')
         output = []
         items = search_text.split(',')
-        print items
         project_id = self.kwargs['pk']
         if search_text is not None:
-            print search_text
-            story = Story.objects.filter(reduce(operator.or_, (Q(story_title__icontains=item) for item in items)))
-            print 'here1'
-            print story
-            storie = story.filter(project_title_id = project_id)
-            stories = storie.filter(visibility = 'ys')
-            print 'here'
-            print stories
+            story = Story.objects.filter(reduce(operator.or_, (Q(story_title__icontains=item) & Q(visibility='ys') for item in items)))
+            stories = story.filter(project_title_id = project_id)
             response = [{'story_title': story.story_title} for story in stories]
             return HttpResponse(json.dumps(response), content_type="application/json")
         else:
             return super(SearchStoryView, self).dispatch(request, *args, **kwargs)
+
+
+class ProjectSettingView(DetailView):
+    template_name = "issue_models/project_settings.html"
+    model = Project
+
+    def get(self, request, *args, **kwargs):
+        if request.is_ajax():
+            print 'ajax req'
+            context =dict()
+            initial_date = self.request.GET.get('initial_date')
+            final_date = self.request.GET.get('final_date')
+            context = self.story(context,initial_date,final_date)
+            json_data = render_to_string('issue_models/story_table.html', context=context)
+            return HttpResponse(json_data)
+        return super(ProjectSettingView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(ProjectSettingView, self).get_context_data(**kwargs)
+        context=self.story(context)
+        result = render_to_string('issue_models/story_table.html', context=context)
+        context['result'] = result
+        return context
+        # return self.render_to_response(context=context)
+
+    def story(self, context,initial_date=0,final_date=0):
+        print'here111'
+        print 'here'
+        id = self.kwargs['pk']
+        project = Project.objects.get(id = id)
+        if(initial_date==0 and final_date ==0):
+            print '1'
+            story = (Story.objects.filter(project_title=id, visibility='ys')).order_by('assignee','status')
+        else:
+            print '2'
+            story = (Story.objects.filter(project_title=id, visibility='ys', date__range=(initial_date,final_date))).order_by('assignee','status')
+        print story
+        assignee = project.assigned_to.all()
+        print assignee
+        list = []
+        estimate = []
+        i = 0
+        for each in assignee:
+            list.append([])
+            estimate.append([])
+            list[i].append(story.filter(assignee=each, status='finish').count())
+            estimate[i].append(story.filter(assignee=each, status='finish').aggregate(Sum('estimate')))
+            list[i].append(story.filter(assignee=each, status='strtd').count())
+            estimate[i].append((story.filter(assignee=each, status='strtd')).aggregate(Sum('estimate')))
+            list[i].append(story.filter(assignee=each, status='unstrtd').count())
+            estimate[i].append((story.filter(assignee=each, status='unstrtd')).aggregate(Sum('estimate')))
+            i = i+1
+        unassigned_story = (Story.objects.filter(project_title=id, visibility='ys', assignee=None)).\
+            order_by('assignee','status')
+        no_unassigned = unassigned_story.count()
+        no_estimate = unassigned_story.aggregate(Sum('estimate'))
+        context['zipped_values'] = izip(assignee, list, estimate)
+        context['unassigned_story'] = unassigned_story
+        context['no_unassigned'] = no_unassigned
+        context['no_estimate'] = no_estimate
+        return context

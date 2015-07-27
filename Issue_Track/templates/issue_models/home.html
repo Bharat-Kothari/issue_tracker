@@ -1,6 +1,12 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
+<div class="login_signup">
+    <div class="login_signup_bar">
+        login/signup
+    </div>
 
-<h1><a href="{% url 'login' %}">login</a> </h1>
-<h3><a href="{% url 'signup' %}">signup</a> </h3>
+        <h2><a href="{% url 'login' %}">login</a> </h2>
+        <h2><a href="{% url 'signup' %}">signup</a> </h2>
+
+</div>
 {% endblock %}

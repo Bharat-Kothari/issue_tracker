@@ -1,31 +1,38 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
-<h2><a href="{% url 'logout' %}">logout</a>
-<a href="{% url 'profile' %}">profile info</a>
-<a href="{% url 'create' %}">create project</a></h2>
+<h2>
+<div class="nav_bar clearfix">
+
+    <div class="nav_bar_button"><a href="{% url 'profile' %}">profile info</a></div>
+    <div class="nav_bar_button"><a href="{% url 'create' %}">create project</a></div>
+    <div class="nav_bar_button">    <a href="{% url 'logout' %}">logout</a></div>
+</div>
+</h2>
   <select name="filter" class="styled" onclick="document.location = this.value" value="GO" >
       {{filter_code}}
        <option value="{% url 'dashboard' %}?id=1" {% if filter_code == '1' %} selected {% endif %}>All</option>
        <option value="{% url 'dashboard' %}?id=2" {% if filter_code == '2' %} selected {% endif %}>Project Member</option>
        <option value="{% url 'dashboard' %}?id=3" {% if filter_code == '3' %} selected {% endif %}>Owner</option>
   </select>
-    <h2>Dash Board</h2>
-    {% if object_list %}
-    <table id="project">
-        {% for project in object_list %}
-            <tr>
-                <td>project name :<a href="{% url 'project' project.id %}">{{ project.project_title}}</a></td>
-            </tr>
-        {% endfor %}
-    </table>
-    {# .... **Now the pagination section** .... #}
-    {% if is_paginated %}
-        <div class="pagination">
-            <span class="page-links">
-                {% if page_obj.has_previous %}
-                   <a href="{% url 'dashboard' %}?id={{filter_code}}&page={{ page_obj.previous_page_number }}">previous</a>
 
-                {% endif %}
+    <div class="projects">
+        <h2>Dash Board</h2>
+            {% if object_list %}
+                <table id="project">
+                    {% for project in object_list %}
+
+                        <p>project name :<a href="{% url 'project' project.id %}">{{ project.project_title}}</a></p>
+
+                    {% endfor %}
+                </table>
+    {# .... **Now the pagination section** .... #}
+            {% if is_paginated %}
+                <div class="pagination">
+                    <span class="page-links">
+                        {% if page_obj.has_previous %}
+                            <a href="{% url 'dashboard' %}?id={{filter_code}}&page={{ page_obj.previous_page_number }}">previous</a>
+
+            {% endif %}
                 <span class="page-current">
                     Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
                 </span>
@@ -33,13 +40,12 @@
                     <a href="{% url 'dashboard' %}?id={{filter_code}}&page={{ page_obj.next_page_number }}">next</a>
 
                 {% endif %}
-            </span>
-        </div>
-    {% endif %}
-{% else %}
+                </span>
+                </div>
+            {% endif %}
+            {% else %}
     <h3>Projects</h3>
     <p>No Project found!!!</p>
 {% endif %}
-
-<h6> DASH BOARD</h6>
+</div>
 {% endblock %}

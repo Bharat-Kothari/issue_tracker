@@ -1,12 +1,16 @@
 {% extends "issue_models/base.html" %}
 
 {% block content %}
-<h2><a href="{% url 'logout' %}">logout</a>
-    <a href="{% url 'dashboard' %}">Dashboard</a>
-{% if object.project_manager == user %}
-        <a href="{% url 'updateproject' object.id %}">update project</a>
-{% endif %}
-<a href="{% url 'addstory' object.id %}">Addstory</a>
+<h2>
+    <div class="nav_bar clearfix">
+        <div class="nav_bar_button"><a href="{% url 'logout' %}">logout</a></div>
+        <div class="nav_bar_button"><a href="{% url 'dashboard' %}">Dashboard</a></div>
+        {% if object.project_manager == user %}
+            <div class="nav_bar_button"><a href="{% url 'updateproject' object.id %}">update project</a></div>
+            <div class="nav_bar_button"><a href="{% url 'project_settings' object.id %}">Project Setting</a></div>
+        {% endif %}
+        <div class="nav_bar_button"><a href="{% url 'addstory' object.id %}">Addstory</a></div>
+    </div>
 </h2>
 
 <h3>

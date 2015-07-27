@@ -1,9 +1,18 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
 
-<form action="{% url 'login' %}" method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Login" />
-</form>
+
+
+    <div class="login_signup">
+        <div class="login_signup_bar">
+            Login
+        </div>
+            <form action="{% url 'login' %}" method="post">
+                {{ form.as_p }}
+                {% csrf_token %}
+                <input type="submit" value="Login" />
+            </form>
+
+    </div>
+
 {% endblock %}

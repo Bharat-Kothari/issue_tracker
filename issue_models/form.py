@@ -1,8 +1,10 @@
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.validators import RegexValidator
 from django.contrib.auth import authenticate
+from django.forms import modelformset_factory, BaseFormSet
 
 from Issue_Track import settings
 from issue_models.models import MyUser, Project, Story
@@ -70,7 +72,6 @@ class ProfileUpdateForm(forms.ModelForm):
 
 # Create Project Form
 class CreateProjectForm(forms.ModelForm):
-
     class Meta:
         model = Project
         fields = ['project_title', 'description', 'assigned_to']
@@ -140,53 +141,13 @@ class ProjectForm(forms.ModelForm):
     fields = ['project_title', 'description', 'assigned_to']
 
 
-# Form for addition of story in a project
-class AddStoryForm(forms.ModelForm):
-    description = forms.CharField(max_length=500,required=False)
-    estimate = forms.IntegerField("in hours",required=False)
 
-
-    class Meta:
-        model = Story
-        fields = ['story_title', 'description', 'assignee', 'estimate', 'scheduled']
-
-    # To pop id and user send from view to have member of project
-    def __init__(self, *args, **kwargs):
-        self.id = kwargs.pop('id')
-        self.user = kwargs.pop('user')
-        super(AddStoryForm, self).__init__(*args, **kwargs)
-        project = Project.objects.get(pk=self.id)
-        self.fields['assignee'].queryset = project.assigned_to.all()
-
-    error_messages = {
-        'negative_value': ("Enter Positive value or 0"),
-    }
-
-    # to check estimate is positive
-    def clean_estimate(self):
-        estimate = self.cleaned_data.get("estimate")
-        if estimate < 0:
-            raise forms.ValidationError(
-                self.error_messages["negative_value"],
-                code='negative_value')
-        return estimate
-
-    # To save form after adding the project name in the story
-    def save(self, commit=True):
-            user1 = super(AddStoryForm, self).save(commit=False)
-            user1.project_title = Project.objects.get(pk=self.id)
-            user1.email = self.user
-            user1.save()
-            return user1
-
-
-# Form to update story
 class UpdateStoryForm(forms.ModelForm):
     class Meta:
         model = Story
         fields = ['story_title', 'description', 'assignee', 'estimate', 'scheduled', 'status']
     error_messages = {
-        'unscheduled': ("This has to be unstarted when it is not scheduled"),
+        'unscheduled': ("This has to be unstarted when story is not scheduled"),
     }
 
     def __init__(self, *args, **kwargs):
@@ -200,10 +161,13 @@ class UpdateStoryForm(forms.ModelForm):
     def clean_status(self):
         status = self.cleaned_data.get("status")
         scheduled = self.cleaned_data.get("scheduled")
+        assignee = self.cleaned_data.get("assignee")
         if scheduled == 'no' and status != 'unstrtd':
             raise forms.ValidationError(
             self.error_messages["unscheduled"],
             code='unscheduled')
+        if assignee == None and status != 'unstrtd':
+            raise forms.ValidationError("Assignee need to assigned when status is other than unstarted ")
         return status
 
 class ChangePasswordForm(PasswordChangeForm):
@@ -211,3 +175,30 @@ class ChangePasswordForm(PasswordChangeForm):
                                     widget=forms.PasswordInput, min_length=6,validators=[RegexValidator(regex ='(?=.*[0-9])(?=.*[!@#$%^&*()-+])', message="enter proper password")])
     new_password2 = forms.CharField(label=("New password confirmation"),
                                     widget=forms.PasswordInput, min_length=6,validators=[RegexValidator(regex ='(?=.*[0-9])(?=.*[!@#$%^&*()-+])', message="enter proper password")])
+
+
+
+
+class AddStoryForm(forms.ModelForm):
+    description = forms.CharField(max_length=500,required=False)
+    estimate = forms.IntegerField("in hours",required=False)
+
+    class Meta:
+        model = Story
+        fields = ['story_title', 'description', 'assignee', 'estimate', 'scheduled']
+
+    def __init__(self,*args,**kwargs):
+        id = kwargs.pop('id')
+        super(AddStoryForm,self).__init__(*args,**kwargs)
+        project = Project.objects.get(pk=id)
+        self.fields['assignee'].queryset = project.assigned_to.all()
+
+class AddStoryFormSet(BaseFormSet):
+    def __init__(self, *args,**kwargs):
+        self.id = kwargs.pop('id')
+        super(AddStoryFormSet,self).__init__(*args,**kwargs)
+
+    def _construct_form(self, i, **kwargs):
+        kwargs['id']=self.id
+        return super(AddStoryFormSet,self)._construct_form(i, **kwargs)
+

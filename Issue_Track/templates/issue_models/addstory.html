@@ -1,12 +1,29 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
-<h2><a href="{% url 'logout' %}">logout</a>
-    <a href="{% url 'dashboard' %}">Dashboard</a>
-    <a href="{% url 'project' project.id %}">project</a>
+
+<h2>
+    <div class="nav_bar clearfix">
+        <div class="nav_bar_button"><a href="{% url 'logout' %}">logout</a></div>
+        <div class="nav_bar_button"><a href="{% url 'dashboard' %}">Dashboard</a></div>
+        <div class="nav_bar_button"><a href="{% url 'project' project.id %}">project</a></div>
+    </div>
 </h2>
+
     <form method="post">
+        {{ form.management_form }}
         {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Create" />
+          {% for form1 in form.forms %}
+    	    <div id="{{ form1.prefix }}-row" class="dynamic-form">
+    	        {{ form1.as_p }}
+    	    <a id="remove-{{ form1.prefix }}-row" href="javascript:void(0)" class="delete-row">Delete form</a>
+
+            </div>
+          {% endfor %}
+                <a href="javascript:void(0)" class="add-row">Add form</a>
+
+
+    <div>
+        <input type="submit" value=" ADD " />
+    </div>
     </form>
 {% endblock %}

@@ -90,8 +90,8 @@ class Story(models.Model):
     email = models.ForeignKey(MyUser, related_name='Story_Creator')
     story_title = models.CharField(max_length=50)
     description = models.CharField(max_length=500)
-    assignee = models.ForeignKey(MyUser)
-    estimate = models.IntegerField("in hours")
+    assignee = models.ForeignKey(MyUser, blank=True, null=True)
+    estimate = models.PositiveIntegerField(default=0)
     date = models.DateField(default=datetime.now)
     unstrtd = 'unstrtd'
     strtd = 'strtd'

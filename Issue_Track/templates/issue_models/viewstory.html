@@ -1,8 +1,11 @@
 {% extends "issue_models/base.html" %}
 {% block content %}
-<h2><a href="{% url 'logout' %}">logout</a>
-        <a href="{% url 'dashboard' %}">Dashboard</a>
-        <a href="{% url 'project' object.project_title.id%}">project</a>
+<h2>
+    <div class="nav_bar clearfix">
+        <div class="nav_bar_button"><a href="{% url 'dashboard' %}">Dashboard</a></div>
+        <div class="nav_bar_button"><a href="{% url 'project' object.project_title.id%}">project</a></div>
+        <div class="nav_bar_button"><a href="{% url 'logout' %}">logout</a></div>
+    </div>
 </h2>
 <h2>
     <p>storytitle : {{object.story_title}}</p>
