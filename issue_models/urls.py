@@ -18,8 +18,7 @@ urlpatterns = [
     url(r'^projects/story/update/(?P<pk>[0-9 ]+)/$', views.story_view_check(views.UpdateStoryView.as_view()), name='updatestory'),
     url(r'^projects/story/view/(?P<pk>[0-9 ]+)/$', views.story_view_check(views.StoryView.as_view()), name='storyview'),
     url(r'^projects/story/delete/(?P<pk>[0-9 ]+)/$', views.story_view_check(views.StoryDeleteView.as_view()), name='storydelete'),
-    url(r'^password_change/$', django.contrib.auth.views.password_change, {'template_name': 'issue_models/password_reset.html','post_change_redirect': 'update_profile', 'password_change_form': form.ChangePasswordForm }, name='changepassword'),
     url(r'^search/story/(?P<pk>[0-9 ]+)/$', views.SearchStoryView.as_view(), name='searchstory'),
-    url(r'^project/settings/(?P<pk>[0-9 ]+)/$', views.ProjectSettingView.as_view(), name='project_settings'),
+    url(r'^project/settings/(?P<pk>[0-9 ]+)/$', views.project_update_check(views.ProjectSettingView.as_view()), name='project_settings'),
 ]
 

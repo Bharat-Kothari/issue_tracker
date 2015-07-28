@@ -11,20 +11,9 @@ DATABASES = {
 
 DEBUG = True
 
-EMAIL_BACKEND = 'djcelery_email.backends.CeleryEmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'kotharibharat92@gmail.com'
 EMAIL_HOST_PASSWORD = '09831754948'
 DEFAULT_FROM_EMAIL = 'webmaster.default@example.com'
-
-CELERY_EMAIL_TASK_CONFIG = {
-    'queue' : 'email',
-    'rate_limit' : '50/m',
-
-}
-
-CELERY_EMAIL_TASK_CONFIG = {
-    'name': 'djcelery_email_send',
-    'ignore_result': True,
-}

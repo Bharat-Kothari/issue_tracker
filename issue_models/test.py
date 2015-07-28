@@ -59,8 +59,10 @@ class DashboardTest(TestCase):
         self.client.login(email=self.instance.email, password=self.password)
         response = self.client.get('/home/dashboard/')
         self.assertEqual(response.status_code, 200)
-
-
+    def test_authenticated_user_access_login(self):
+        self.client.login(email=self.instance.email, password=self.password)
+        response = self.client.get('/home/login/')
+        self.assertRedirects(response,'/home/dashboard/')
 class ProfileTest(TestCase):
 
     def setUp(self):
@@ -144,10 +146,12 @@ class ProjectTest(TestCase):
     def setUp(self):
         self.instance = N(MyUser)
         self.member = G(MyUser)
+        self.member2 = G(MyUser)
         self.password = self.instance.password
         self.instance.password = make_password(self.password)
         self.instance.save()
         self.project = G(Project, project_manager=self.instance, assigned_to=[self.member, self.instance])
+        self.project2 = G(Project,project_manager=self.member, assigned_to=[self.member, self.member2])
         return self.instance
 
     def test_unauthenticated_user(self):
@@ -161,7 +165,12 @@ class ProjectTest(TestCase):
 
     def test_authenticated_user_non_member(self):
         self.client.login(email=self.instance.email, password=self.password)
-        response = self.client.get(reverse('project', kwargs={'pk': '50'}))
+        response = self.client.get(reverse('project', kwargs={'pk': self.project2.id}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_authenticated_user_no_project(self):
+        self.client.login(email=self.instance.email, password=self.password)
+        response = self.client.get(reverse('project', kwargs={'pk': 50}))
         self.assertEqual(response.status_code, 404)
 
 
@@ -170,6 +179,7 @@ class ProjectUpdateTest(TestCase):
     def setUp(self):
         self.instance = N(MyUser)
         self.member = G(MyUser)
+        self.member1 = G(MyUser)
         self.password = self.instance.password
         self.instance.password = make_password(self.password)
         self.instance.save()
@@ -195,7 +205,7 @@ class ProjectUpdateTest(TestCase):
         response = self.client.post(reverse('updateproject', kwargs={'pk': self.project.id}),
                                     {'project_title': 'abcd',
                                      'description': 'abcd1',
-                                     'assigned_to': [self.member.id, self.instance.id]})
+                                     'assigned_to': [self.member1.id, self.member.id, self.instance.id]})
         self.assertRedirects(response, (reverse('project', kwargs={'pk': self.project.id})))
 
     def test_authenticate_update_project_missing_data(self):
@@ -288,6 +298,18 @@ class UpdateStoryTest(TestCase):
                                      'status': 'unstrtd'})
         self.assertRedirects(response, (reverse('project', kwargs={'pk': self.project.id})))
 
+    def test_authenticated_user_update_story_wrong_condition(self):
+        self.client.login(email=self.instance.email, password=self.password)
+        response = self.client.post(reverse('updatestory', kwargs={'pk': self.story.id}),
+                                    {'story_title': 'story1',
+                                     'description': 'About Story',
+                                     'assignee': None,
+                                     'estimate': 1,
+                                     'scheduled': 'ys',
+                                     'status': 'strtd'})
+        self.assertEqual(response.status_code, 200)
+
+
     def test_authenticated_user_update_story_missing_value(self):
         self.client.login(email=self.instance.email, password=self.password)
         response = self.client.post(reverse('updatestory', kwargs={'pk': self.story.id}),
@@ -307,3 +329,26 @@ class UpdateStoryTest(TestCase):
                                      'scheduled': 'no',
                                      'status': 'finish'})
         self.assertEqual(response.status_code, 200)
+
+class ProjectSettingsTest(TestCase):
+
+    def setUp(self):
+        self.instance = N(MyUser)
+        self.member = G(MyUser)
+        self.password = self.instance.password
+        self.instance.password = make_password(self.password)
+        self.instance.save()
+        self.project = G(Project, project_manager=self.instance, assigned_to=[self.member, self.instance])
+        self.project2 = G(Project)
+        self.story = G(Story, project_title=self.project, email=self.instance)
+        return self.instance
+
+    def test_unauthenticated_user(self):
+        response = self.client.post('/home/projects/story/update/32/')
+        self.assertRedirects(response, '/home/login/')
+
+    def test_authenticated_user_project_settings_access(self):
+        self.client.login(email=self.instance.email, password=self.password)
+        response = self.client.get(reverse('project_settings', kwargs={'pk': self.project.id}))
+        self.assertEqual(response.status_code, 200)
+

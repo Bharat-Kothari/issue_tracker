@@ -8,9 +8,11 @@
         <div class="nav_bar_button"><a href="{% url 'logout' %}">logout</a></div>
     </div>
 </h2>
-
-<input type="date" class="initial_date"> <input type="date" class="final_date">
+<div class="error-message"> </div>
+<input type="date" class="initial_date" value="{{init|date:'Y-m-d'}}">
+<input type="date" class="final_date" value="{{final|date:'Y-m-d'}}">
 <input type="button" value="search" class="date_button">
+<input type="button" value="Send mail" class="send_mail">
 <input type="hidden" id="project_id" value={{project.id}}>
 
 <br>

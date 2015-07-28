@@ -1,6 +1,7 @@
 from itertools import izip
 import json
 import operator
+import datetime
 
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.forms import modelformset_factory, formset_factory
@@ -12,11 +13,13 @@ from django.contrib.auth import logout
 from django.shortcuts import redirect, get_object_or_404
 from django.core.mail import send_mail
 from django.db.models import Q, Sum
+import time
 
 from Issue_Track import settings
 from issue_models.form import AddStoryFormSet, AddStoryForm
 from issue_models.models import MyUser, Project, Story
 from issue_models import form
+from issue_models import tasks
 # To check user is already logged in.
 
 
@@ -118,7 +121,7 @@ class SignupView(CreateView):
 
     # To login the new user and send the confirmation mail.
 
-    def form_valid(self, form):
+    def form_valid(self,form):
         email = form.cleaned_data['email']
         password = form.cleaned_data['password']
         form.save()
@@ -379,37 +382,40 @@ class ProjectSettingView(DetailView):
 
     def get(self, request, *args, **kwargs):
         if request.is_ajax():
-            print 'ajax req'
             context =dict()
             initial_date = self.request.GET.get('initial_date')
             final_date = self.request.GET.get('final_date')
+
             context = self.story(context,initial_date,final_date)
-            json_data = render_to_string('issue_models/story_table.html', context=context)
-            return HttpResponse(json_data)
+            data = render_to_string('issue_models/story_table.html', context=context)
+            if(self.request.GET.get('mail')):
+                tasks.email.delay(data, self.request.user.email)
+                print 'yes'
+            return HttpResponse(data)
         return super(ProjectSettingView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        id = self.kwargs['pk']
         context = super(ProjectSettingView, self).get_context_data(**kwargs)
-        context=self.story(context)
+        initial = (Story.objects.filter(project_title=id)).order_by('date')
+        if(initial):
+            initial_date = initial[0].date
+        else:
+            initial_date=datetime.date.today()
+        context = self.story(context, initial_date, datetime.date.today())
+
         result = render_to_string('issue_models/story_table.html', context=context)
         context['result'] = result
+        context['init']=initial_date
+        context['final']=datetime.date.today()
         return context
         # return self.render_to_response(context=context)
 
-    def story(self, context,initial_date=0,final_date=0):
-        print'here111'
-        print 'here'
+    def story(self, context,initial_date,final_date):
         id = self.kwargs['pk']
         project = Project.objects.get(id = id)
-        if(initial_date==0 and final_date ==0):
-            print '1'
-            story = (Story.objects.filter(project_title=id, visibility='ys')).order_by('assignee','status')
-        else:
-            print '2'
-            story = (Story.objects.filter(project_title=id, visibility='ys', date__range=(initial_date,final_date))).order_by('assignee','status')
-        print story
+        story = (Story.objects.filter(project_title=id, visibility='ys', date__range=(initial_date,final_date))).order_by('assignee','status')
         assignee = project.assigned_to.all()
-        print assignee
         list = []
         estimate = []
         i = 0

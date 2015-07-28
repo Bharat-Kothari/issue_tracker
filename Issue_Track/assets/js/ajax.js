@@ -21,20 +21,31 @@ $(function(){
         $('#search-results').hide();
     });
 
-    $('.date_button').click(function(event) {
+    function callajax(flag_mail){
+        $('.error-message').html("");
+
 
         var initial_date = $('.initial_date').val();
         var final_date = $('.final_date').val();
         var x = document.getElementById("project_id").value;
-        dates = {"initial_date":initial_date, "final_date":final_date};
-        if (!initial_date)
-            alert("select initial date")
+        if(flag_mail)
+            dates = {"initial_date":initial_date, "final_date":final_date,"mail":"send_mail"};
         else
-        if(!final_date)
-        alert("select final date")
+
+            dates = {"initial_date":initial_date, "final_date":final_date};
+        if (!initial_date) {
+            $('.error-message').html("select initial date");
+            return false
+        }
+        else
+        if(!final_date) {
+            $('.error-message').html("select final date");
+            return false
+        }
         else
         if(initial_date>final_date)
-        alert("initial date should be smaller than final")
+        {$('.error-message').html("initial date should be smaller than final date");
+        return false}
 	    $.ajax({
 		        type: "GET",
 		        url: "http://localhost:8000/home/project/settings/"+x+"/",
@@ -42,7 +53,15 @@ $(function(){
                 success: searchStory
 
 		        });
-	});
+
+    }
+    $('.date_button').click(function(event) {
+        callajax(false)
+		        });
+
+    $('.send_mail').click(function(event) {
+        callajax(true)
+                });
 });
 
 function searchStory(data){

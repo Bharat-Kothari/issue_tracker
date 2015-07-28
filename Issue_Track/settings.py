@@ -176,6 +176,7 @@ DJANGO_APPS = (
     # Admin panel and documentation:
     'django.contrib.admin',
     'django.contrib.admindocs',
+
 )
 
 THIRD_PARTY_APPS = (
@@ -192,9 +193,8 @@ THIRD_PARTY_APPS = (
 LOCAL_APPS = (
     'libs',         # To make template tags work
     'issue_models'
-    "djcelery_email"
-)
 
+)
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 ########## END APP CONFIGURATION
@@ -279,3 +279,8 @@ TEMPLATE_DEBUG = DEBUG
 
 
 COMPRESS_URL = STATIC_URL
+
+
+
+
+BROKER_URL = 'amqp://'
