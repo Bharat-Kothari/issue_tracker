@@ -13,7 +13,7 @@ import issue_models
 urlpatterns = patterns('',
 
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^$', TemplateView.as_view(template_name="issue_models/home.html"), name='homepage'),
+    url(r'^$', TemplateView.as_view(template_name="issue_models/home.html")),
     url(r'^home/', include('issue_models.urls')),
     url(r'^media/(?P<path>.*)$', serve, {'document_root': getattr(settings, "MEDIA_ROOT"),}),
 

@@ -151,8 +151,6 @@ class LoginView(FormView):
                 login(self.request, user)
                 return HttpResponseRedirect(reverse('dashboard'))
 
-        return HttpResponseRedirect(reverse('login'))
-
 
 # View for logout
 
@@ -364,17 +362,17 @@ class SearchStoryView(View):
 
     def dispatch(self, request, *args, **kwargs):
         search_text = self.request.GET.get('search_text')
-        output = []
+        print len(search_text)
         items = search_text.split(',')
+        x = [a for a in items if a]
         project_id = self.kwargs['pk']
-        if search_text is not None:
-            story = Story.objects.filter(reduce(operator.or_, (Q(story_title__icontains=item) & Q(visibility='ys') for item in items)))
+        if ((len(search_text) != 0) and (search_text!=",") and (x)) :
+            story = Story.objects.filter(reduce(operator.or_, (Q(story_title__icontains=item) & Q(visibility='ys') for item in x)))
             stories = story.filter(project_title_id = project_id)
             response = [{'story_title': story.story_title} for story in stories]
-            return HttpResponse(json.dumps(response), content_type="application/json")
         else:
-            return super(SearchStoryView, self).dispatch(request, *args, **kwargs)
-
+            response = [{'story_title': "Please enter search word"}]
+        return HttpResponse(json.dumps(response), content_type="application/json")
 
 class ProjectSettingView(DetailView):
     template_name = "issue_models/project_settings.html"
@@ -390,8 +388,7 @@ class ProjectSettingView(DetailView):
             data = render_to_string('issue_models/story_table.html', context=context)
             if(self.request.GET.get('mail')):
                 tasks.email.delay(data, self.request.user.email)
-                print 'yes'
-            return HttpResponse(data)
+            return HttpResponse(data,content_type="html")
         return super(ProjectSettingView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

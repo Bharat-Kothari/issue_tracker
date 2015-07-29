@@ -35,8 +35,7 @@ class MyUserManager(BaseUserManager):
 class MyUser(AbstractBaseUser, PermissionsMixin):
 
     email = models.EmailField(('email'), max_length=50, unique=True,
-        help_text=('Required. 50 characters or fewer. Letters, digits and '
-                    '@/./+/-/_ only.'),
+        help_text=('Letters, digits and @/./+/-/_ only.'),
         error_messages={
             'unique': ("A email with that already exists."),
         })
