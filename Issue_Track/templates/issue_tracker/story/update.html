@@ -1,0 +1,20 @@
+{% extends "issue_tracker/base.html" %}
+{% block content %}
+<h3>
+    <div class="nav_bar clearfix">
+        <div class="nav_bar_button_logout"><a href="{% url 'logout' %}">logout</a></div>
+        <div class="nav_bar_button"><a href="{% url 'dashboard' %}">Dashboard</a></div>
+        <div class="nav_bar_button"><a href="{% url 'storyview' object.id %}">storys</a></div>
+    </div>
+</h3>
+<h4>
+    <div class="well" style="width: 1000px;">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <input type="submit" value="Create" />
+            </form>
+
+</div>
+</h4>
+{% endblock %}

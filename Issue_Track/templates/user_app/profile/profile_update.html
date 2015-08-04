@@ -1,0 +1,36 @@
+{% extends "user_app/base.html" %}
+{% block content %}
+    <h3>
+        <div class="nav_bar clearfix">
+          <div class="nav_bar_button">  <a href="{% url 'dashboard' %}">Dashboard</a></div>
+          <div class="nav_bar_button">  <a href="{% url 'profile' %}">Profile</a></div>
+          <div class="nav_bar_button_logout">  <a href="{% url 'logout' %}">Logout</a></div>
+        </div>
+    </h3>
+<div class="well" style="margin: 0 auto; width: 500px">
+        {% if user.photo %}
+            <img src="{{MEDIA_URL}}{{user.photo}}" width="100px" height="100px"/>
+        {% else %}
+            <img src="/media/images/Facebook-Blank-Photo1.jpg" width="100px" height="100px"/>
+        {% endif %}
+
+    <p></p>
+    <form action="{% url 'update_profile' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
+        <b>Emailaddress</b> : <input type="text" value="{{user.email}}" disabled>
+        <p></p>
+        {{ form.as_p }}
+
+        <input type="submit" value="Update" name="form1" />
+    </form>
+    </div>
+    <div class="well" style="margin: 0 auto;background:#adadad; width: 500px">
+    <form action="{% url 'update_profile' %}" method="post">
+        {% csrf_token %}
+            {{form2.old_password.label_tag}}{{form2.old_password}}
+            {{ form2.old_password.errors }}
+            <p> {{form2.new_password1.label_tag}}{{form2.new_password1}}{{ form2.new_password1.errors }} </p>
+            <p>{{form2.new_password2.label_tag}}{{form2.new_password2}}{{ form2.new_password2.errors }}</p>
+        <input type="submit" name="form2" value="change_password" />
+    </form>
+        </div>
+{%endblock%}

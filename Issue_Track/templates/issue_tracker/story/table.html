@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+    <p>
+    ASSIGNED STORY:
+    </p>
+    {%for each, each1, each2 in zipped_values %}
+    <div class="col-sm-1" style="margin:5px;background-color:#bce8f1 ">Name</div>
+    <div class="col-sm-3" style="margin:5px; background-color:#f2dede ">{{ each.first_name }}</div>
+    <div class="col-sm-2" style="margin:5px; background-color:#bce8f1 ">Email-Id</div>
+    <div class="col-sm-3" style="margin:5px; background-color:#f2dede ">{{ each.email }}</div>
+        <table class="table table-striped">
+            <tr>
+                <td>
+                   <b> Story</b>
+                </td>
+                <td>
+                    <b>No of story</b>
+                </td>
+                <td>
+                    <b>total estimate</b>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    Finished story
+                </td>
+                <td>
+                    {{each1.0}}
+                </td>
+                <td>
+                    {{each2.0.estimate__sum}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    started story
+                </td>
+                <td>
+                    {{each1.1}}
+                </td>
+                <td>
+                    {{each2.1.estimate__sum}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    unstarted story
+                </td>
+                <td>
+                    {{each1.2}}
+                </td>
+                <td>
+                    {{each2.2.estimate__sum}}
+                </td>
+            </tr>
+        </table>
+    {% endfor %}
+    <br><br>
+
+    UNASSIGNED STORY
+    <table class="table table-striped">
+            <tr>
+                <td>
+                    Story
+                </td>
+                <td>
+                    No of story
+                </td>
+                <td>
+                    total estimate
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Unassigned story
+                </td>
+                <td>
+                    {{ no_unassigned }}
+                </td>
+                <td>
+                    {{ no_estimate.estimate__sum }}
+                </td>
+            </tr>
+    </table>
+

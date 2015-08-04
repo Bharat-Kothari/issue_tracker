@@ -192,7 +192,9 @@ THIRD_PARTY_APPS = (
 
 LOCAL_APPS = (
     'libs',         # To make template tags work
-    'issue_models'
+
+    'user_app',
+    'issue_tracker',
 
 )
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -227,7 +229,7 @@ EMAIL_USE_TLS = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 ########## END SESSION
 
-AUTH_USER_MODEL = 'issue_models.MyUser'
+AUTH_USER_MODEL = 'user_app.MyUser'
 ########## COMPRESSION CONFIGURATION
 RESOURCE_VERSION = 1
 
@@ -276,6 +278,7 @@ from local_settings import *
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#template-debug
 TEMPLATE_DEBUG = DEBUG
+ALLOWED_HOSTS = ['*']
 
 
 COMPRESS_URL = STATIC_URL

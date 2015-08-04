@@ -1,0 +1,32 @@
+{% extends "issue_tracker/base.html" %}
+
+{% block content %}
+<h3>
+    <div class="nav_bar clearfix">
+        <div class="nav_bar_button"><a href="{% url 'dashboard' %}">Dashboard</a></div>
+        <div class="nav_bar_button"><a href="{% url 'project' project.id %}">project</a></div>
+        <div class="nav_bar_button_logout"><a href="{% url 'logout' %}">logout</a></div>
+    </div>
+</h3>
+<div class="well" style="margin: 0 auto; width: 1000px;">
+<div class="error-message"> </div>
+<input type="date" class="initial_date" value="{{init|date:'Y-m-d'}}">
+<input type="date" class="final_date" value="{{final|date:'Y-m-d'}}">
+<input type="button" value="search" class="date_button">
+<input type="button" value="Send mail" class="send_mail">
+<input type="hidden" id="project_id" value={{project.id}}>
+
+<br>
+<div class="story_table">
+    {{ result }}
+</div>
+</div>
+{%endblock%}
+{% block footer %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="{{ STATIC_URL  }}/js/ajax.js"></script>
+    <script src="{{ STATIC_URL  }}/js/story.js"></script>
+
+{% endblock %}
+
+

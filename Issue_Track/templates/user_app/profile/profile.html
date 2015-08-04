@@ -1,0 +1,42 @@
+{% extends "user_app/base.html" %}
+{% block content %}
+<h3>
+<div class="nav_bar clearfix">
+
+    <div class="nav_bar_button"><a href="{% url 'dashboard' %}">Dashboard</a></div>
+    <div class="nav_bar_button"><a href=" {%url 'update_profile' %}"> Update Profile </a></div>
+    <div class="nav_bar_button_logout">    <a href="{% url 'logout' %}">Logout</a></div>
+</div>
+</h3>
+    <div class="profile">
+    <h3>
+        <table class="table table-striped">
+            <tbody>
+            <tr>
+                <td>EmailAddress</td>
+                <td>{{ user.email}}</td>
+            </tr>
+
+            <tr>
+                <td>First Name</td>
+                <td>{{user.first_name}}</td>
+            </tr>
+            <tr>
+                <td>Last Name</td>
+                <td>{{user.last_name}}</td>
+            </tr>
+
+            <tr>
+                <td>Date Of Birth</td>
+                <td>{{user.dob}}</td>
+            </tr>
+        {% if user.photo %}
+            <img src="{{MEDIA_URL}}{{user.photo}}" width="100px" height="100px"/>
+        {% else %}
+            <img src="/media/images/Facebook-Blank-Photo1.jpg" width="100px" height="100px"/>
+        {% endif %}
+            </tbody>
+        </table>
+    </h3>
+    </div>
+{%endblock%}

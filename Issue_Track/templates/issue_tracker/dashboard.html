@@ -1,0 +1,51 @@
+{% extends "issue_tracker/base.html" %}
+{% block content %}
+<h3>
+<div class="nav_bar clearfix">
+
+    <div class="nav_bar_button"><a href="{% url 'profile' %}">Profile</a></div>
+    <div class="nav_bar_button"><a href="{% url 'create' %}">Create Project</a></div>
+    <div class="nav_bar_button_logout">    <a href="{% url 'logout' %}">Logout</a></div>
+</div>
+</h3>
+  <select name="filter" class="styled" onclick="document.location = this.value" value="GO" >
+      {{filter_code}}
+       <option value="{% url 'dashboard' %}?id=1" {% if filter_code == '1' %} selected {% endif %}>All</option>
+       <option value="{% url 'dashboard' %}?id=2" {% if filter_code == '2' %} selected {% endif %}>Project Member</option>
+       <option value="{% url 'dashboard' %}?id=3" {% if filter_code == '3' %} selected {% endif %}>Owner</option>
+  </select>
+
+    <div class="projects">
+        <h2>Dash Board</h2>
+            {% if object_list %}
+                <table id="project">
+                    {% for project in object_list %}
+
+                        <p>project name :<a href="{% url 'project' project.id %}">{{ project.project_title}}</a></p>
+
+                    {% endfor %}
+                </table>
+    {# .... **Now the pagination section** .... #}
+            {% if is_paginated %}
+                <div class="pagination">
+                    <span class="page-links">
+                        {% if page_obj.has_previous %}
+                            <a href="{% url 'dashboard' %}?id={{filter_code}}&page={{ page_obj.previous_page_number }}">previous</a>
+
+            {% endif %}
+                <span class="page-current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="{% url 'dashboard' %}?id={{filter_code}}&page={{ page_obj.next_page_number }}">next</a>
+
+                {% endif %}
+                </span>
+                </div>
+            {% endif %}
+            {% else %}
+    <h3>Projects</h3>
+    <p>No Project found!!!</p>
+{% endif %}
+</div>
+{% endblock %}

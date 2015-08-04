@@ -1,0 +1,97 @@
+{% extends "issue_tracker/base.html" %}
+
+{% block content %}
+<h3>
+    <div class="nav_bar clearfix">
+        <div class="nav_bar_button"><a href="{% url 'dashboard' %}">Dashboard</a></div>
+        {% if object.project_manager == user %}
+            <div class="nav_bar_button"><a href="{% url 'updateproject' object.id %}">Update Project</a></div>
+            <div class="nav_bar_button"><a href="{% url 'project_settings' object.id %}">Project Setting</a></div>
+        {% endif %}
+        <div class="nav_bar_button"><a href="{% url 'addstory' object.id %}">Addstory</a></div>
+        <div class="nav_bar_button_logout"><a href="{% url 'logout' %}">Logout</a></div>
+
+        <h4>
+            <form method="get">
+                <input type="hidden" id="project_id" value={{object.id}}>
+                <input type="text" id="search" name="search" />
+                <input type="submit" value="search" id="search-button" />
+                <input type="submit" value="clear" id="clear-button"/>
+            </form>
+
+        </h4>
+
+    </div>
+</h3>
+<div class="showstory" >
+<ul id="search-results">
+
+            </ul>
+    </div>
+<div class="well" style="margin: 10px 0px 0px 50px; width: 400px;">
+    <h4>
+        <p>Manager Name :{{object.project_manager}}</p>
+        <p>Project Name :{{object.project_title}}</p>
+        <p>Description : {{ object.description}}</p>
+    </h4>
+</div>
+<div class="well-lg">
+<h2>Story</h2>
+</div>
+    <div class="well" style="margin: 10px; width: 500px; float: left;"> <h3>Scheduled</h3>
+    <table class="table table-striped"  style="text-align: center;" >
+        <thead>
+            <tr>
+                <td>Strory Title</td>
+                <td>Assignee</td>
+                <td>Estimate(in hrs)</td>
+            </tr>
+        </thead>
+        <tbody>
+        {% for story in started %}
+            <tr>
+                <td><a href="{% url 'storyview' story.id %}"> {{story.story_title}}</a></td>
+                <td>{{story.assignee}}</td>
+                <td>{{story.estimate}}</td>
+            </tr>
+        {% endfor %}
+        {% for story in unstarted %}
+            <tr>
+                <td><a href="{% url 'storyview' story.id %}"> {{story.story_title}}</a></td>
+                <td>{{story.assignee}}</td>
+                <td>{{story.estimate}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    <div class="well" style="margin: 10px; width: 500px; float: left;">
+    <h3>UnScheduled</h3>
+
+    <table class="table table-striped"  style="text-align: center;" >
+        <thead>
+            <tr>
+                <td>Strory Title</td>
+                <td>Assignee</td>
+                <td>Estimate(in hrs)</td>
+            </tr>
+        </thead>
+        <tbody>
+        {% for story in unsch_story %}
+            <tr>
+                <td><a href="{% url 'storyview' story.id %}"> {{story.story_title}}</a></td>
+                <td>{{story.assignee}}</td>
+                <td>{{story.estimate}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+
+    </table>
+        </div>
+{%endblock%}
+{% block footer %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="{{ STATIC_URL  }}/js/ajax.js"></script>
+    <script src="{{ STATIC_URL  }}/js/story.js"></script>
+
+{% endblock %}
