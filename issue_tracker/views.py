@@ -1,4 +1,4 @@
-from itertools import izip
+from itertools import izip, count
 import json
 import operator
 import datetime
@@ -10,14 +10,13 @@ from django.template.loader import render_to_string
 from django.views.generic import View, CreateView, FormView, UpdateView, DetailView, ListView
 from django.shortcuts import redirect, get_object_or_404
 from django.core.mail import send_mail
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 
 from Issue_Track import settings
 from issue_tracker.form import AddStoryFormSet, AddStoryForm
 from issue_tracker.models import Project, Story
 from issue_tracker import form
 from issue_tracker import tasks
-
 
 
 class DashBoardView(ListView):
@@ -31,7 +30,7 @@ class DashBoardView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(DashBoardView, self).get_context_data(**kwargs)
-        context['filter_code'] = self.request.GET.get('id')      # To send the id in filter_code
+        context['filter_code'] = self.request.GET.get('id')  # To send the id in filter_code
         return context
 
     def get_queryset(self):
@@ -114,7 +113,7 @@ class AddStoryView(FormView):
     View to add multiple story to the project
     """
 
-    form_class = formset_factory(AddStoryForm, formset=AddStoryFormSet, extra=0,min_num=1)
+    form_class = formset_factory(AddStoryForm, formset=AddStoryFormSet, extra=0, min_num=1)
     template_name = "issue_tracker/story/add.html"
 
     def get_form_kwargs(self):
@@ -122,7 +121,7 @@ class AddStoryView(FormView):
         kwargs['id'] = self.kwargs['pk']
         return kwargs
 
-    def get_context_data(self,  **kwargs):
+    def get_context_data(self, **kwargs):
         context = super(AddStoryView, self).get_context_data(**kwargs)
         context['project'] = Project.objects.get(pk=self.kwargs['pk'])
         return context
@@ -167,7 +166,7 @@ class UpdateStoryView(UpdateView):
     def form_valid(self, form):
         assigned = form.cleaned_data['assignee']
         result = Story.objects.filter(assignee=assigned).exists()
-        if result == False:                              # To send the mail to new assigned member
+        if result == False:  # To send the mail to new assigned member
             subject = self.object.story_title
             message = ' You have been assigned to story'
             from_email = settings.EMAIL_HOST_USER
@@ -185,6 +184,7 @@ class StoryDeleteView(View):
     view to softly delete a story
     Setting visibility to false
     """
+
     def dispatch(self, request, *args, **kwargs):
         id = kwargs.get('pk')
         story = get_object_or_404(Story, pk=id)
@@ -203,14 +203,17 @@ class SearchStoryView(View):
 
     def dispatch(self, request, *args, **kwargs):
         search_text = self.request.GET.get('search_text')
-        items = search_text.split(',')                             # for splitting the data separated by ','
-        keywords = [a.strip() for a in items if a.strip()]         # To remove blank spaces before and after the word
+        items = search_text.split(',')  # for splitting the data separated by ','
+        keywords = [a.strip() for a in items if a.strip()]  # To remove blank spaces before and after the word
         project_id = self.kwargs['pk']
         if (len(search_text) != 0) and keywords:
             story = Story.objects.filter(reduce(operator.or_, (Q(story_title__icontains=item) & Q(visibility='ys')
                                                                for item in keywords)))
             stories = story.filter(project_title_id=project_id)
-            response = [{'story_title': story.story_title} for story in stories]
+            if stories:
+                response = [{'story_title': story.story_title} for story in stories]
+            else:
+                response = [{'story_title': "No Story Found"}]
         else:
             response = [{'story_title': "Please enter search word"}]
         return HttpResponse(json.dumps(response), content_type="application/json")
@@ -257,28 +260,21 @@ class ProjectSettingView(DetailView):
     def story(self, context, initial_date, final_date):
         id = self.kwargs['pk']
         project = Project.objects.get(id=id)
-        story = (Story.objects.filter(project_title=id, visibility='ys',
-                                      date__range=(initial_date, final_date))).order_by('assignee', 'status')
-        assignee = project.assigned_to.all()
+        assignees = project.assigned_to.all()
+        storys = (Story.objects.filter(project_title=id, visibility='ys', date__range=(initial_date, final_date))).order_by('assignee__email')
         list = []
-        estimate = []
         i = 0
-        for each in assignee:
+        for each in assignees:
             list.append([])
-            estimate.append([])
-            list[i].append(story.filter(assignee=each, status='finish').count())
-            estimate[i].append(story.filter(assignee=each, status='finish').aggregate(Sum('estimate')))
-            list[i].append(story.filter(assignee=each, status='strtd').count())
-            estimate[i].append((story.filter(assignee=each, status='strtd')).aggregate(Sum('estimate')))
-            list[i].append(story.filter(assignee=each, status='unstrtd').count())
-            estimate[i].append((story.filter(assignee=each, status='unstrtd')).aggregate(Sum('estimate')))
+            list[i] = (storys.filter(assignee=each).exclude(status='deliv')).values('assignee__email', 'status','estimate').annotate(d=Count('assignee'),d1=Sum('estimate'))
             i += 1
-        unassigned_story = (Story.objects.filter(project_title=id, visibility='ys', assignee=None)).\
-            order_by('assignee', 'status')
-        no_unassigned = unassigned_story.count()
-        no_estimate = unassigned_story.aggregate(Sum('estimate'))
-        context['zipped_values'] = izip(assignee, list, estimate)      # to have all the 3 list traversed together
-        context['unassigned_story'] = unassigned_story
-        context['no_unassigned'] = no_unassigned
-        context['no_estimate'] = no_estimate
+
+
+        un_assigned_story = storys.filter(assignee=None)
+        count_story = un_assigned_story.count()
+        count_estimate = un_assigned_story.aggregate(Sum('estimate'))
+
+        context['result']=izip(assignees, list)
+        context['count_story']=count_story
+        context['count_estimate']=count_estimate
         return context

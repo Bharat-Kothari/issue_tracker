@@ -116,6 +116,11 @@ class UpdateStoryForm(forms.ModelForm):
 
         return status
 
+    def clean_estimate(self):
+        estimate = self.cleaned_data.get("estimate")
+        if estimate >100:
+            raise forms.ValidationError("Enter value less than 100")
+        return estimate
 
 class AddStoryForm(forms.ModelForm):
     description = forms.CharField(max_length=500, required=False)
@@ -131,6 +136,11 @@ class AddStoryForm(forms.ModelForm):
         project = Project.objects.get(pk=id)
         self.fields['assignee'].queryset = project.assigned_to.all()
 
+    def clean_estimate(self):
+        estimate = self.cleaned_data.get("estimate")
+        if estimate >100:
+            raise forms.ValidationError("Enter value less than 100")
+        return estimate
 
 class AddStoryFormSet(BaseFormSet):
 

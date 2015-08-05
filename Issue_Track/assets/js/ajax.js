@@ -31,16 +31,6 @@ $(function(){
         else
 
             dates = {"initial_date":initial_date, "final_date":final_date};
-        if (!initial_date) {
-            $('.error-message').html("select initial date");
-            return false
-        }
-        else
-        if(!final_date) {
-            $('.error-message').html("select final date");
-            return false
-        }
-        else
         if(initial_date>final_date)
         {$('.error-message').html("initial date should be smaller than final date");
         return false}
