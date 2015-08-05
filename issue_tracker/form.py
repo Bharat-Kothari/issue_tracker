@@ -100,7 +100,6 @@ class UpdateStoryForm(forms.ModelForm):
         super(UpdateStoryForm, self).__init__(*args, **kwargs)
         story = Story.objects.get(pk=self.id)
         project = story.project_title
-        print project.assigned_to.all()
         self.fields['assignee'].queryset = project.assigned_to.all()
 
     # To check user have not scheduled and done status other than un-started
