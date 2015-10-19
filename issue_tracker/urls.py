@@ -27,4 +27,4 @@ urlpatterns = [
     url(r'^projects/', include(project)),
     url(r'^search/story/(?P<pk>[0-9 ]+)/$', decorators.project_member_check(views.SearchStoryView.as_view()), name='searchstory'),
     url(r'^project/settings/(?P<pk>[0-9 ]+)/$', decorators.project_update_check(views.ProjectSettingView.as_view()), name='project_settings'),
-]
+    ]

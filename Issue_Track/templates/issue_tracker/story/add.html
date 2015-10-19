@@ -9,29 +9,50 @@
     </div>
 </h3>
 <div class="well" style="margin: 0 auto;width: 500px;">
-    <form method="post">
-        {{ form.management_form }}
-        {% csrf_token %}
-          {% for form1 in form.forms %}
-    	    <div id="{{ form1.prefix }}-row" class="dynamic-form">
-    	        {{ form1.as_p }}
+    <!--<form method="post">-->
+    <!--&lt;!&ndash;{{ form.management_form }}&ndash;&gt;-->
+    <!--&lt;!&ndash;{% for form1 in form.forms %}&ndash;&gt;-->
+    <!--<div id="{{ form1.prefix }}-row" class="dynamic-form">-->
+    <!--{{ form1.as_p }}-->
 
-    	    <a id="remove-{{ form1.prefix }}-row" href="javascript:void(0)" class="delete-row">Delete form</a>
+    <!--<a id="remove-{{ form1.prefix }}-row" href="javascript:void(0)" class="delete-row">Delete form</a>-->
 
-            </div>
-          {% endfor %}
-                <a href="javascript:void(0)" class="add-row">Add form</a>
+    <!--</div>-->
+    <!--{% endfor %}-->
+    <!--<a href="javascript:void(0)" class="add-row">Add form</a>-->
 
+    <table>
+        <tbody data-bind="foreach: storys">
+        <tr>
+            <td>story title:<input data-bind="value: story_title" /></td>
+            <span data-bind="validationMessage: story_title"></span>
+            <td>description:<input data-bind="value: description" /></td>
+            <!--<td>assignee:<input data-bind="value: assignee" /></td>-->
+            <td>assignee:<select data-bind="options: $root.assignees, value: assignee, optionsText: 'name'"></select></td>
+            <td>estimate:<input data-bind="value: estimate" /></td>
+            <td>scheduled:<select data-bind="options: $root.optionss, value: scheduled, optionsText: 'scheduled'"></select></td>
+            <!--<td>scheduled:<input data-bind="value: scheduled" /></td>-->
+            <td><a href="#" data-bind="click: $root.removeStory" >Remove</a></td>
+        </tr>
+        </tbody>
+    </table>
 
-    <div>
-        <input type="submit" value=" ADD " />
-    </div>
-    </form>
+        <button data-bind="click: addStory">Add form</button>
+
+        <div>
+            <button data-bind="click: show_div">submit</button>
+        </div>
+        </form>
 </div>
+<h3 data-bind="visible: displaydiv">
+    total name: <span data-bind="text: totalname()"></span>
+</h3>
+
 {% endblock %}
 
 {% block footer %}
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="{{ STATIC_URL  }}/js/ajax.js"></script>
-    <script src="{{ STATIC_URL  }}/js/story.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src='{{ STATIC_URL  }}/js/knockout.js'></script>
+<!--<script src="{{ STATIC_URL  }}/js/ajax.js"></script>-->
+<script src="{{ STATIC_URL  }}/js/story_formset.js"></script>
 {% endblock %}

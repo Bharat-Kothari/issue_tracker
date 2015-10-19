@@ -11,12 +11,14 @@ from django.views.generic import View, CreateView, FormView, UpdateView, DetailV
 from django.shortcuts import redirect, get_object_or_404
 from django.core.mail import send_mail
 from django.db.models import Q, Sum, Count
+from psycopg2.extensions import JSON
 
 from Issue_Track import settings
 from issue_tracker.form import AddStoryFormSet, AddStoryForm
 from issue_tracker.models import Project, Story
 from issue_tracker import form
 from issue_tracker import tasks
+from user_app.models import MyUser
 
 
 class DashBoardView(ListView):
@@ -115,6 +117,35 @@ class AddStoryView(FormView):
 
     form_class = formset_factory(AddStoryForm, formset=AddStoryFormSet, extra=0, min_num=1)
     template_name = "issue_tracker/story/add.html"
+
+    def post(self, request, *args, **kwargs):
+        if request.is_ajax():
+            stories_list = self.request.POST.get('stories')
+            stories_list = json.loads(stories_list)
+            for story in stories_list:
+                s = Story()
+                s.project_title = Project.objects.get(id=self.kwargs['pk'])
+                s.email = self.request.user
+                s.story_title = story['story_title']
+                s.description = story['description']
+                s.estimate = story['estimate']
+                s.scheduled = story['scheduled']['scheduled']
+                s.assignee = MyUser.objects.get(email=story['assignee']['name'])
+                s.save()
+            return HttpResponse(stories_list, content_type="html")
+        return super(AddStoryView, self).post(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        if request.is_ajax():
+            print('assignee')
+            project = Project.objects.get(id=self.kwargs['pk'])
+            assignees = project.assigned_to.all()
+            print(assignees)
+            response = [{'name': assignee.email} for assignee in assignees]
+            print (response)
+            print(response[1])
+            return HttpResponse(json.dumps(response), content_type="application/json")
+        return super(AddStoryView, self).get(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super(AddStoryView, self).get_form_kwargs()
